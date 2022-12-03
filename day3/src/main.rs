@@ -15,7 +15,7 @@ fn calc_prio(item : u32) -> u32 {
     }
 }
 
-fn main() {
+fn part1() {
     let mut sum_prio = 0;
 
     // File hosts must exist in current path before this produces output
@@ -41,6 +41,40 @@ fn main() {
     }
 
     println!("Total: {}", sum_prio);
+}
+
+fn part2() {
+    let mut sum_prio = 0;
+    let mut group : Vec<HashSet<u32>> = Vec::new();
+
+    // File hosts must exist in current path before this produces output
+    if let Ok(lines) = read_lines("input.txt") {
+        // Consumes the iterator, returns an (Optional) String
+        for line in lines {
+            if let Ok(line) = line {
+                let t : HashSet<u32> = line.as_bytes().iter().map(|c| *c as u32).collect();
+                group.push(t);
+                if group.len() == 3 {
+                    let intersect_ab : HashSet<u32> = group[0].intersection(&group[1]).cloned().collect();
+                    assert!(!intersect_ab.is_empty());
+                    let intersect_abc : Vec<u32> = intersect_ab.intersection(&group[2]).cloned().collect();
+                    assert_eq!(intersect_abc.len(), 1);
+                    group.clear();
+
+                    let prio = calc_prio(intersect_abc.first().cloned().unwrap());
+                    assert!(prio > 0 && prio <= 52);
+                    sum_prio += prio;
+                }
+            }
+        }
+    }
+
+    println!("Total: {}", sum_prio);
+}
+
+fn main() {
+    //part1();
+    part2();
 }
 
 // The output is wrapped in a Result to allow matching on errors
