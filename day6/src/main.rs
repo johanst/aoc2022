@@ -2,10 +2,6 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
-use std::cmp;
 use std::collections::VecDeque;
 use std::collections::HashSet;
 
@@ -17,7 +13,7 @@ fn get_sop(s : &str) -> u32 {
         vd.push_back(c);
         if vd.len() == 5 {
             vd.pop_front();
-            let vs : HashSet<char> = vd.iter().map(|c| *c).collect::<HashSet<char>>();
+            let vs : HashSet<char> = vd.iter().copied().collect::<HashSet<char>>();
             if vs.len() == 4 {
                 // println!("{s} {count} {:?} {:?}", vs, vd);
                 return count;
@@ -37,7 +33,7 @@ fn get_sop_and_som(s : &str) -> u32 {
         vd.push_back(c);
         if vd.len() == seq_len + 1 {
             vd.pop_front();
-            let vs : HashSet<char> = vd.iter().map(|c| *c).collect::<HashSet<char>>();
+            let vs : HashSet<char> = vd.iter().copied().collect::<HashSet<char>>();
             if vs.len() == seq_len {
                 // println!("{s} {count} {:?} {:?}", vs, vd);
                 if seq_len == 14 {
