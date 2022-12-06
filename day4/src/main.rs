@@ -5,6 +5,7 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use std::cmp;
 
 fn part1() {
     let mut sum = 0;
@@ -44,13 +45,11 @@ fn part2() {
                 let mut v : Vec<Vec<u32>> = line.split(",").map(
                     |s| s.split("-").map(|n| n.parse::<u32>().unwrap()).collect::<Vec<u32>>())
                     .collect();
-                if v[0][0] > v[1][0] {
-                    v.swap(0, 1);
-                }
-                // 1 contains b
-                let f = v[0][1] >= v[1][1] || (v[0][0] == v[1][0] && v[0][1] <= v[1][1]);
-                println!("{:?} - {}", v, f);
-                if f {
+                let l = cmp::max(v[0][0], v[1][0]);
+                let h = cmp::min(v[0][1], v[1][1]);
+                let overlap = h >= l;
+                println!("{:?} - {},{} => {}", v, l, h, overlap);
+                if overlap {
                     sum += 1;
                 }
             }
@@ -61,7 +60,7 @@ fn part2() {
 }
 
 fn main() {
-    part1();
+    //part1();
     part2();
 }
 
