@@ -108,21 +108,53 @@ struct TreeCount {
     down : i32
 }
 
+impl TreeCount {
+    fn scenic_score(&self) -> i32 {
+        self.up * self.left * self.right * self.down
+    }
+}
+
 fn count_trees(m : &Vec<Vec<i32>>, t : &mut Vec<Vec<TreeCount>>, y : usize, x : usize) {
     let lym = m.len();
     let lxm = m[0].len();
     let h_me = m[y][x];
 
-    // Vec (height, distance)
-    let v : Vec<(i32, i32)> = Vec::new();
-
     // up
-    if y != 0 {
-        v.clear();
-        (0..y-1).rev().enumerate().map(|(idx, yy)| (idx, m[yy][x])).for_each(|hd| v.push());
+    let mut d = 0;
+    for yy in (0..y).rev() {
+        d += 1;
+        if m[yy][x] >= h_me {
+            break;
+        }
     }
-
-    println!("{v:?}");
+    t[y][x].up = d;
+    // down
+    d = 0;
+    for yy in y+1..lym {
+        d += 1;
+        if m[yy][x] >= h_me {
+            break;
+        }
+    }
+    t[y][x].down = d;
+    // left
+    d = 0;
+    for xx in (0..x).rev() {
+        d += 1;
+        if m[y][xx] >= h_me {
+            break;
+        }
+    }
+    t[y][x].left = d;
+    // right
+    d = 0;
+    for xx in x+1..lxm {
+        d += 1;
+        if m[y][xx] >= h_me {
+            break;
+        }
+    }
+    t[y][x].right = d;
 }
 
 fn part2(m : &Vec<Vec<i32>>) {
@@ -134,14 +166,33 @@ fn part2(m : &Vec<Vec<i32>>) {
         t.push(vec![TreeCount::default(); lxm]);
     }
 
-    count_trees(m, 
+    for y in 0..lym {
+        for x in 0..lxm {
+            count_trees(m, &mut t, y, x);
+        }
+    }
 
-    println!("{t:?}");
+    // println!("{t:?}");
 
+    let mut sc : Vec<Vec<i32>> = Vec::new();
+    for _ in 0..lym {
+        sc.push(vec![0; lxm]);
+    }
+    for y in 0..lym {
+        for x in 0..lxm {
+            sc[y][x] = t[y][x].scenic_score();
+        }
+    }
+
+    // println!("{sc:?}");
+
+    let sum = sc.iter().flatten().max().unwrap();
+
+    println!("Max scenic score: {sum}");
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
