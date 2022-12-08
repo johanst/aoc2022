@@ -68,22 +68,7 @@ fn set_largest_from_here(m : &Vec<Vec<i32>>,
     largest
 }
 
-fn part1() {
-    let lines = std::fs::read_to_string("input.txt").unwrap();
-    let mut v = lines.split("\n").collect::<Vec<&str>>();
-    assert!(!v.is_empty());
-    if v[v.len() - 1] == "" {
-        v.pop();
-    }
-    let v = v;
-
-    let mut m : Vec<Vec<i32>> = Vec::new();
-    for s in v.iter() {
-        m.push(s.chars().map(|c| c.to_digit(10)
-                             .map(|u| i32::try_from(u).unwrap()).unwrap())
-               .collect::<Vec<i32>>());
-    }
-
+fn part1(m : &Vec<Vec<i32>>) {
     let mut lg : Vec<Vec<Largest>> = Vec::new();
     let lym = m.len();
     let lxm = m[0].len();
@@ -115,10 +100,62 @@ fn part1() {
     println!("Number of trees: {count}");
 }
 
-fn part2() {
+#[derive(Debug, Default, Clone)]
+struct TreeCount {
+    up : i32,
+    left : i32,
+    right : i32,
+    down : i32
+}
+
+fn count_trees(m : &Vec<Vec<i32>>, t : &mut Vec<Vec<TreeCount>>, y : usize, x : usize) {
+    let lym = m.len();
+    let lxm = m[0].len();
+    let h_me = m[y][x];
+
+    // Vec (height, distance)
+    let v : Vec<(i32, i32)> = Vec::new();
+
+    // up
+    if y != 0 {
+        v.clear();
+        (0..y-1).rev().enumerate().map(|(idx, yy)| (idx, m[yy][x])).for_each(|hd| v.push());
+    }
+
+    println!("{v:?}");
+}
+
+fn part2(m : &Vec<Vec<i32>>) {
+    let lym = m.len();
+    let lxm = m[0].len();
+
+    let mut t : Vec<Vec<TreeCount>> = Vec::new();
+    for _ in 0..lym {
+        t.push(vec![TreeCount::default(); lxm]);
+    }
+
+    count_trees(m, 
+
+    println!("{t:?}");
+
 }
 
 fn main() {
-    part1();
-    //part2();
+    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let mut v = lines.split("\n").collect::<Vec<&str>>();
+    assert!(!v.is_empty());
+    if v[v.len() - 1] == "" {
+        v.pop();
+    }
+    let v = v;
+
+    let mut m : Vec<Vec<i32>> = Vec::new();
+    for s in v.iter() {
+        m.push(s.chars().map(|c| c.to_digit(10)
+                             .map(|u| i32::try_from(u).unwrap()).unwrap())
+               .collect::<Vec<i32>>());
+    }
+
+    //part1(&m);
+    part2(&m);
 }
