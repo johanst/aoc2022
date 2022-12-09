@@ -43,12 +43,30 @@ impl fmt::Display for Map {
         for y in self.ymin..=self.ymax {
             for x in self.xmin..=self.xmax {
                 let c : char = hm.get(&(y, x)).cloned().unwrap_or_else(|| '.');
-                print!("{}", c);
+                write!(f, "{}", c);
             }
-            println!();
+            writeln!(f);
         }
 
         Ok(())
+    }
+}
+
+fn pront(m : &Map) {
+    let mut hm : HashMap<(i32, i32), char> = HashMap::new();
+    hm.insert((0, 0), 's');
+    for (n, yx) in m.knots.iter().enumerate().rev() {
+        let c = if n == 0 { 'H' } else { char::from_digit(n as u32, 10).unwrap() };
+        hm.insert(*yx, c);
+    }
+    println!("{:?}", m.knots);
+    println!("{hm:?}");
+    for y in m.ymin..=m.ymax {
+        for x in m.xmin..=m.xmax {
+            let c : char = hm.get(&(y, x)).cloned().unwrap_or_else(|| '.');
+            print!("{}", c);
+        }
+        println!();
     }
 }
 
@@ -72,34 +90,41 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
                 .map(|item| (item, m.knots[0].1))
                 .collect::<Vec<(i32, i32)>>(),
         };
-        println!("{mov:?}");
+        //println!("{mov:?}");
 
-        let (cury, curx) = m.knots[0];
-        for pos in path.iter().map(|dpos| (cury + dpos.1, curx + dpos.0)) {
-            let (mut hprevy, mut hprevx) = pos;
-            m.knots[0] = 
+        let cury : i32 = m.knots[0].0;
+        let curx : i32 = m.knots[0].1;
+        //println!("cury {cury}, curx {curx}");
+        for pos in path.iter() {
+            let mut hprevy = m.knots[0].0; // old leader_pos y
+            let mut hprevx = m.knots[0].1; // old leader_pos x
+            m.knots[0] = *pos; // new leader pos
             for i in 0..nf {
-//                let (hprevy, hprevx) = (m.knots[i].0 + dpos.0, m.knots[i].1 +);
-//                m.knots[i] = leadpos;
-//                if (m.knots[i].0 - m.knots[i+1].0).abs() > 1 ||
-//                    (m.knots[i].1 - m.knots[i+1].1).abs() > 1 {
-//                    m.knots[i+1] = (hprevy, hprevx);
-//                    if i == nf - 1 {
-//                        m.visited.insert(m.knots[i+1]);
-//                    }
-//                }
-//                leadpos = m.knots[i+1];
-//
-//            }
-//            m.knots[0] = *pos;
-            println!("   {pos:?}");
+                if (m.knots[i].0 - m.knots[i+1].0).abs() > 1 ||
+                    (m.knots[i].1 - m.knots[i+1].1).abs() > 1 {
+                        // follower moves to old leader pos
+                        m.knots[i+1] = (hprevy, hprevx);
+                    }
+                else {
+                    // follower does not move, we can break here
+                    break;
+                }
+                // we track the last follower
+                if i == nf - 1 {
+                    m.visited.insert(m.knots[i+1]);
+                }
+                (hprevy, hprevx) = m.knots[i+1]; // assign a new leader
+            }
+            //println!("   {pos:?} {:?}/{:?}", m.knots[0], m.knots[1]);
         };
-        println!("{m}");
 
         m.xmin = i32::min(m.xmin, m.knots[0].1);
         m.xmax = i32::max(m.xmax, m.knots[0].1);
         m.ymin = i32::min(m.ymin, m.knots[0].0);
         m.ymin = i32::max(m.ymin, m.knots[0].0);
+
+        //println!("{m}");
+        //pront(&m);
     }
 
     m
@@ -108,9 +133,9 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
 fn part1(moves : &Vec<Move>) {
     let map = walk(&moves, 1);
 
-    println!("{moves:?}");
+    //println!("{moves:?}");
 
-    println!("{map:?}");
+    //println!("{map:?}");
     println!("{}", map.visited.len());
 }
 
@@ -125,7 +150,7 @@ fn part2(moves : &Vec<Move>) {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -148,6 +173,6 @@ fn main() {
         })
         .collect::<Vec<Move>>();
 
-    //part1(&moves);
-    part2(&moves);
+    part1(&moves);
+    //part2(&moves);
 }
