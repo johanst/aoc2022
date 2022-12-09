@@ -44,7 +44,7 @@ impl fmt::Display for Map {
         for y in self.ymin..=self.ymax {
             for x in self.xmin..=self.xmax {
                 let c : char = hm.get(&(y, x)).cloned().unwrap_or_else(|| '.');
-                write!(f, "{}", c);
+                write!(f, "{}", c)?;
             }
             writeln!(f)?;
         }
@@ -100,12 +100,14 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
             let mut hprevy = m.knots[0].0; // old leader_pos y
             let mut hprevx = m.knots[0].1; // old leader_pos x
             m.knots[0] = *pos; // new leader pos
-            println!("    {pos:?}");
+            //println!("    {pos:?}");
             for i in 0..nf {
+                //println!("  - i: {i} ({hprevy},{hprevx})");
                 if (m.knots[i].0 - m.knots[i+1].0).abs() > 1 ||
                     (m.knots[i].1 - m.knots[i+1].1).abs() > 1 {
                         // follower moves to old leader pos
-                        m.knots[i+1] = (hprevy, hprevx);
+                        // and we assign the old position as the new leader
+                        (m.knots[i+1], (hprevy, hprevx)) = ((hprevy, hprevx), m.knots[i+1]);
                     }
                 else {
                     // follower does not move, we can break here
@@ -115,24 +117,24 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
                 if i == nf - 1 {
                     m.visited.insert(m.knots[i+1]);
                 }
-                (hprevy, hprevx) = m.knots[i+1]; // assign a new leader
-
             }
 
-            m.xmin = i32::min(m.xmin, m.knots[0].1);
-            m.xmax = i32::max(m.xmax, m.knots[0].1);
-            m.ymin = i32::min(m.ymin, m.knots[0].0);
-            m.ymax = i32::max(m.ymax, m.knots[0].0);
-
-            println!("{m}");
+            //println!("{m}");
             //pront(&m);
-            let mut dummy : String = "".to_string();
-            stdin().read_line(&mut dummy);
+            //let mut dummy : String = "".to_string();
+            //stdin().read_line(&mut dummy);
             //println!("   {pos:?} {:?}/{:?}", m.knots[0], m.knots[1]);
         };
 
+        m.xmin = i32::min(m.xmin, m.knots[0].1);
+        m.xmax = i32::max(m.xmax, m.knots[0].1);
+        m.ymin = i32::min(m.ymin, m.knots[0].0);
+        m.ymax = i32::max(m.ymax, m.knots[0].0);
+        println!("{m}");
 
-        //println!("{m}");
+        let mut dummy : String = "".to_string();
+        stdin().read_line(&mut dummy);
+
         //pront(&m);
     }
 
@@ -182,6 +184,6 @@ fn main() {
         })
         .collect::<Vec<Move>>();
 
-    part1(&moves);
-    //part2(&moves);
+    //part1(&moves);
+    part2(&moves);
 }
