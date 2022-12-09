@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use std::collections::HashMap;
 use std::cmp;
 use std::fmt;
+use std::io::stdin;
 
 #[derive(Debug, Clone)]
 enum Direction {
@@ -45,7 +46,7 @@ impl fmt::Display for Map {
                 let c : char = hm.get(&(y, x)).cloned().unwrap_or_else(|| '.');
                 write!(f, "{}", c);
             }
-            writeln!(f);
+            writeln!(f)?;
         }
 
         Ok(())
@@ -59,7 +60,7 @@ fn pront(m : &Map) {
         let c = if n == 0 { 'H' } else { char::from_digit(n as u32, 10).unwrap() };
         hm.insert(*yx, c);
     }
-    println!("{:?}", m.knots);
+    println!("{:?}", m);
     println!("{hm:?}");
     for y in m.ymin..=m.ymax {
         for x in m.xmin..=m.xmax {
@@ -90,7 +91,7 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
                 .map(|item| (item, m.knots[0].1))
                 .collect::<Vec<(i32, i32)>>(),
         };
-        //println!("{mov:?}");
+        println!("{mov:?}");
 
         let cury : i32 = m.knots[0].0;
         let curx : i32 = m.knots[0].1;
@@ -99,6 +100,7 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
             let mut hprevy = m.knots[0].0; // old leader_pos y
             let mut hprevx = m.knots[0].1; // old leader_pos x
             m.knots[0] = *pos; // new leader pos
+            println!("    {pos:?}");
             for i in 0..nf {
                 if (m.knots[i].0 - m.knots[i+1].0).abs() > 1 ||
                     (m.knots[i].1 - m.knots[i+1].1).abs() > 1 {
@@ -114,14 +116,21 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
                     m.visited.insert(m.knots[i+1]);
                 }
                 (hprevy, hprevx) = m.knots[i+1]; // assign a new leader
+
             }
+
+            m.xmin = i32::min(m.xmin, m.knots[0].1);
+            m.xmax = i32::max(m.xmax, m.knots[0].1);
+            m.ymin = i32::min(m.ymin, m.knots[0].0);
+            m.ymax = i32::max(m.ymax, m.knots[0].0);
+
+            println!("{m}");
+            //pront(&m);
+            let mut dummy : String = "".to_string();
+            stdin().read_line(&mut dummy);
             //println!("   {pos:?} {:?}/{:?}", m.knots[0], m.knots[1]);
         };
 
-        m.xmin = i32::min(m.xmin, m.knots[0].1);
-        m.xmax = i32::max(m.xmax, m.knots[0].1);
-        m.ymin = i32::min(m.ymin, m.knots[0].0);
-        m.ymin = i32::max(m.ymin, m.knots[0].0);
 
         //println!("{m}");
         //pront(&m);
@@ -150,7 +159,7 @@ fn part2(moves : &Vec<Move>) {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("input.txt").unwrap();
+    let lines = std::fs::read_to_string("ex2.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
