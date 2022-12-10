@@ -49,8 +49,49 @@ fn part1(prog : &Vec<Instruction>) {
     println!("Sum: {a}");
 }
 
+fn set_sprite(cycle : i32, x : i32, row : &mut Vec<char>) {
+    let hpos : i32 = (cycle - 1) % 40;
+    let c = if hpos >= x - 1 && hpos <= x + 1 { '#' } else { '.' };
+    row.push(c);
+}
 
-fn part2() {
+fn part2(prog : &Vec<Instruction>) {
+    //let mut adds : VecDeque<i32> = VecDeque::new();
+    let mut x = 1i32;
+    let mut cycle = 0;
+    let mut a = 0;
+    let mut grid : Vec<Vec<char>> = Vec::new();
+    for instr in prog.iter() {
+        // let mutadd = if adds.len() > 1 { adds.pop_back().unwrap() } else { 0 };
+        let add = match instr {
+            Instruction::Addx(n) => *n,
+            Instruction::Noop => 0i32,
+        };
+        if cycle % 40 == 0 {
+            grid.push(Vec::new());
+        }
+        cycle += 1;
+        //-println!("{}    : {x}, {add}", cycle);
+        //a = acc(cycle, x, a);
+        set_sprite(cycle, x, grid.last_mut().unwrap());
+        if add != 0 {
+            if cycle % 40 == 0 {
+                grid.push(Vec::new());
+            }
+            cycle += 1;
+            //println!("{}    : {x}, {add}", cycle);
+            set_sprite(cycle, x, grid.last_mut().unwrap());
+            //a = acc(cycle, x, a);
+            x += add;
+        }
+    }
+
+    for row in grid.iter() {
+        for c in row.iter() {
+            print!("{c}");
+        }
+        println!();
+    }
 }
 
 fn main() {
@@ -75,6 +116,6 @@ fn main() {
 
     println!("{prog:?}");
 
-    part1(&prog);
-    part2();
+    //part1(&prog);
+    part2(&prog);
 }
