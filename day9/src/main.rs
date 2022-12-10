@@ -91,24 +91,31 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
                 .map(|item| (item, m.knots[0].1))
                 .collect::<Vec<(i32, i32)>>(),
         };
-        println!("{mov:?}");
+        //println!("{mov:?}");
 
         let cury : i32 = m.knots[0].0;
         let curx : i32 = m.knots[0].1;
         //println!("cury {cury}, curx {curx}");
         for pos in path.iter() {
-            let mut hprevy = m.knots[0].0; // old leader_pos y
-            let mut hprevx = m.knots[0].1; // old leader_pos x
             m.knots[0] = *pos; // new leader pos
             //println!("    {pos:?}");
             for i in 0..nf {
                 //println!("  - i: {i} ({hprevy},{hprevx})");
-                if (m.knots[i].0 - m.knots[i+1].0).abs() > 1 ||
-                    (m.knots[i].1 - m.knots[i+1].1).abs() > 1 {
-                        // follower moves to old leader pos
-                        // and we assign the old position as the new leader
-                        (m.knots[i+1], (hprevy, hprevx)) = ((hprevy, hprevx), m.knots[i+1]);
+                let mut y = m.knots[i+1].0;
+                let mut x = m.knots[i+1].1;
+                let ydist = m.knots[i].0 - y;
+                let xdist = m.knots[i].1 - x;
+                //println!("   - i={i}, y: {y} x: {x} ydist: {ydist} xdist: {xdist}");
+                if ydist.abs() > 1 || xdist.abs() > 1 {
+                    if ydist != 0 {
+                        y += ydist/ydist.abs();
                     }
+                    if xdist != 0 {
+                        x += xdist/xdist.abs();
+                    }
+                    //println!("         => y: {y} x: {x}");
+                    m.knots[i+1] = (y, x);
+                }
                 else {
                     // follower does not move, we can break here
                     break;
@@ -118,24 +125,17 @@ fn walk(moves : &Vec<Move>, nf : usize) -> Map {
                     m.visited.insert(m.knots[i+1]);
                 }
             }
-
-            //println!("{m}");
-            //pront(&m);
-            //let mut dummy : String = "".to_string();
-            //stdin().read_line(&mut dummy);
-            //println!("   {pos:?} {:?}/{:?}", m.knots[0], m.knots[1]);
+            m.xmin = i32::min(m.xmin, m.knots[0].1);
+            m.xmax = i32::max(m.xmax, m.knots[0].1);
+            m.ymin = i32::min(m.ymin, m.knots[0].0);
+            m.ymax = i32::max(m.ymax, m.knots[0].0);
         };
 
-        m.xmin = i32::min(m.xmin, m.knots[0].1);
-        m.xmax = i32::max(m.xmax, m.knots[0].1);
-        m.ymin = i32::min(m.ymin, m.knots[0].0);
-        m.ymax = i32::max(m.ymax, m.knots[0].0);
-        println!("{m}");
-
-        let mut dummy : String = "".to_string();
-        stdin().read_line(&mut dummy);
-
+        //println!("{m}");
         //pront(&m);
+
+        //let mut dummy : String = "".to_string();
+        //stdin().read_line(&mut dummy);
     }
 
     m
@@ -154,14 +154,14 @@ fn part1(moves : &Vec<Move>) {
 fn part2(moves : &Vec<Move>) {
     let map = walk(&moves, 9);
 
-    println!("{moves:?}");
+    //println!("{moves:?}");
 
-    println!("{map:?}");
+    //println!("{map:?}");
     println!("{}", map.visited.len());
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex2.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
