@@ -23,7 +23,7 @@ impl Default for Operator {
 
 #[derive(Debug, Clone, Copy)]
 enum Operand {
-    Literal(u32),
+    Literal(u64),
     Old
 }
 
@@ -47,9 +47,9 @@ impl Operation {
             .skip(1)
             .collect::<Vec<&str>>();
         assert_eq!(s.len(), 3);
-        let lhs : Operand = s[0].parse::<u32>()
+        let lhs : Operand = s[0].parse::<u64>()
             .map_or_else(|_| Operand::Old, |n| Operand::Literal(n));
-        let rhs : Operand = s[2].parse::<u32>()
+        let rhs : Operand = s[2].parse::<u64>()
             .map_or_else(|_| Operand::Old, |n| Operand::Literal(n));
         let op = match s[1] {
             "+" => Operator::Add,
@@ -59,7 +59,7 @@ impl Operation {
         Self {lhs, op, rhs}
     }
 
-    fn calculate(&self, old : u32) -> u32 {
+    fn calculate(&self, old : u64) -> u64 {
         let lhs = Self::operand(self.lhs, old);
         let rhs = Self::operand(self.rhs, old);
         match self.op {
@@ -68,7 +68,7 @@ impl Operation {
         }
     }
 
-    fn operand(op : Operand, old : u32) -> u32 {
+    fn operand(op : Operand, old : u64) -> u64 {
         match op {
             Operand::Literal(v) => v,
             Operand::Old => old,
@@ -78,20 +78,20 @@ impl Operation {
 
 #[derive(Default, Debug)]
 struct Monkey {
-    items : VecDeque<u32>,
+    items : VecDeque<u64>,
     op : Operation,
-    div : u32,
-    to_monkey_true : u32,
-    to_monkey_false : u32,
+    div : u64,
+    to_monkey_true : u64,
+    to_monkey_false : u64,
 }
 
 fn part1(m : &mut Vec<Monkey>) {
-    let mut mact : Vec<u32> = vec![0; m.len()];
+    let mut mact : Vec<u64> = vec![0; m.len()];
 
     for _ in 0..20 {
         // a round
         for i in 0..m.len() {
-            mact[i] += m[i].items.len() as u32;
+            mact[i] += m[i].items.len() as u64;
 
             // for all items
             while !m[i].items.is_empty() {
@@ -121,14 +121,46 @@ fn part1(m : &mut Vec<Monkey>) {
     println!("Monkey business: {}", mact[0] * mact[1]);
 }
 
-fn part2() {
+fn part2(m : &mut Vec<Monkey>, gdiv : u64) {
+    let mut mact : Vec<u64> = vec![0; m.len()];
+
+    for _ in 0..10000 {
+        // a round
+        for i in 0..m.len() {
+            mact[i] += m[i].items.len() as u64;
+
+            // for all items
+            while !m[i].items.is_empty() {
+                let mut item = m[i].items.pop_front().unwrap();
+                item = m[i].op.calculate(item) % gdiv;
+                let new_monkey = if item % m[i].div == 0 {
+                    m[i].to_monkey_true as usize
+                } else {
+                    m[i].to_monkey_false as usize
+                };
+                m[new_monkey].items.push_back(item);
+            }
+        }
+
+        // Print state
+        //    for i in 0..m.len() {
+        //        println!("Monkey {i}: {:?}", m[i].items);
+        //    }
+    }
+
+    for i in 0..m.len() {
+        println!("Monkey {i}: {:?}", mact[i]);
+    }
+    mact.sort_by(|a, b| b.cmp(a));
+
+    println!("Monkey business: {}", mact[0] * mact[1]);
 }
 
-fn to_u32(s : &str) -> u32 {
+fn to_u64(s : &str) -> u64 {
     s.chars()
         .map(|c| c.to_digit(10))
         .take_while(|opt| opt.is_some())
-        .fold(0, |acc, digit| acc * 10 + digit.unwrap())
+        .fold(0u64, |acc, digit| acc * 10 + digit.unwrap() as u64)
 }
 
 fn main() {
@@ -148,27 +180,29 @@ fn main() {
         m.items = itr.next().unwrap()
             .split_whitespace()
             .skip(2)
-            .map(|item| to_u32(item))
-            .collect::<VecDeque<u32>>();
+            .map(|item| to_u64(item))
+            .collect::<VecDeque<u64>>();
         m.op = Operation::from_string(itr.next().unwrap());
         m.div = itr.next().unwrap()
             .split_whitespace()
-            .last().unwrap().parse::<u32>().unwrap();
+            .last().unwrap().parse::<u64>().unwrap();
         m.to_monkey_true = itr.next().unwrap()
             .split_whitespace()
-            .last().unwrap().parse::<u32>().unwrap();
+            .last().unwrap().parse::<u64>().unwrap();
         m.to_monkey_false = itr.next().unwrap()
             .split_whitespace()
-            .last().unwrap().parse::<u32>().unwrap();
+            .last().unwrap().parse::<u64>().unwrap();
         //dbg!(m);
 
         monkeys.push(m);
     }
 
+    let gdiv : u64 = monkeys.iter().map(|m| m.div).product();
+
     //dbg!(v);
 
-    part1(&mut monkeys);
-    part2();
+    //part1(&mut monkeys);
+    part2(&mut monkeys, gdiv);
 }
 
 #[cfg(test)]
