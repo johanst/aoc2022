@@ -85,7 +85,40 @@ struct Monkey {
     to_monkey_false : u32,
 }
 
-fn part1() {
+fn part1(m : &mut Vec<Monkey>) {
+    let mut mact : Vec<u32> = vec![0; m.len()];
+
+    for _ in 0..20 {
+        // a round
+        for i in 0..m.len() {
+            mact[i] += m[i].items.len() as u32;
+
+            // for all items
+            while !m[i].items.is_empty() {
+                let mut item = m[i].items.pop_front().unwrap();
+                item = m[i].op.calculate(item);
+                item /= 3;
+                let new_monkey = if item % m[i].div == 0 {
+                    m[i].to_monkey_true as usize
+                } else {
+                    m[i].to_monkey_false as usize
+                };
+                m[new_monkey].items.push_back(item);
+            }
+        }
+
+        // Print state
+        //    for i in 0..m.len() {
+        //        println!("Monkey {i}: {:?}", m[i].items);
+        //    }
+    }
+
+    for i in 0..m.len() {
+        println!("Monkey {i}: {:?}", mact[i]);
+    }
+    mact.sort_by(|a, b| b.cmp(a));
+
+    println!("Monkey business: {}", mact[0] * mact[1]);
 }
 
 fn part2() {
@@ -99,13 +132,14 @@ fn to_u32(s : &str) -> u32 {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
         v.pop();
     }
     let v = v;
+    let mut monkeys : Vec<Monkey> = Vec::new();
     for mv in v.chunks_exact(7) {
         let mut m = Monkey::default();
         let mut itr = mv.iter();
@@ -126,12 +160,14 @@ fn main() {
         m.to_monkey_false = itr.next().unwrap()
             .split_whitespace()
             .last().unwrap().parse::<u32>().unwrap();
-        dbg!(m);
+        //dbg!(m);
+
+        monkeys.push(m);
     }
 
     //dbg!(v);
 
-    part1();
+    part1(&mut monkeys);
     part2();
 }
 
