@@ -32,40 +32,24 @@ impl PartialOrd for State {
     }
 }
 
-fn part1(v : &Vec<&str>) {
-    let mut m : Vec<Vec<i32>> = Vec::new();
-    let mut vis : Vec<Vec<i32>> = Vec::new();
-    let (mut sy, mut sx) = (0, 0);
-    let (mut ey, mut ex) = (0, 0);
-    for (y, r) in v.iter().enumerate() {
-        m.push(Vec::new());
-        vis.push(vec![i32::MAX; r.len()]);
-        for (x, c) in r.chars().enumerate() {
-            m[y].push(
-                match c {
-                    'S' => {
-                        (sy, sx) = (y, x);
-                        0i32
-                    },
-                    'E' => {
-                        (ey, ex) = (y, x);
-                        ('z' as u32 - 'a' as u32) as i32
-                    },
-                    _ => (c as u32 - 'a' as u32) as i32
-                });
-        }
-    }
-
+fn shortest_path_from(m : &Vec<Vec<i32>>, sy : i32, sx : i32, ey : usize, ex : usize) -> i32 {
     let ylen = m.len() as i32;
     let xlen = m[0].len() as i32;
+
+    let mut vis : Vec<Vec<i32>> = Vec::new();
+    for _ in 0..ylen {
+        vis.push(vec![i32::MAX; xlen as usize]);
+    }
+
     let directions : [(i32, i32); 4] = [(-1,0), (0,-1), (0,1), (1,0)];
 
     let mut heap = BinaryHeap::new();
-    vis[sy][sx] = 0;
+    vis[sy as usize][sx as usize] = 0;
     heap.push(State{cost:0, y: sy as i32, x: sx as i32});
     while let Some(State {cost, y, x}) = heap.pop() {
         if y as usize == ey && x as usize == ex {
             println!("Reached end, total cost: {cost}");
+            return cost
         }
 
 //        if vis[y as usize][x as usize] <= cost {
@@ -96,10 +80,66 @@ fn part1(v : &Vec<&str>) {
         }
     }
 
-    //dbg!(m);
+    i32::MAX
 }
 
-fn part2() {
+fn part1(v : &Vec<&str>) {
+    let mut m : Vec<Vec<i32>> = Vec::new();
+    let (mut sy, mut sx) = (0, 0);
+    let (mut ey, mut ex) = (0, 0);
+    for (y, r) in v.iter().enumerate() {
+        m.push(Vec::new());
+        for (x, c) in r.chars().enumerate() {
+            m[y].push(
+                match c {
+                    'S' => {
+                        (sy, sx) = (y, x);
+                        0i32
+                    },
+                    'E' => {
+                        (ey, ex) = (y, x);
+                        ('z' as u32 - 'a' as u32) as i32
+                    },
+                    _ => (c as u32 - 'a' as u32) as i32
+                });
+        }
+    }
+
+    let cost = shortest_path_from(&m, sy as i32, sx as i32, ey, ex);
+    dbg!(cost);
+}
+
+fn part2(v : &Vec<&str>) {
+    let mut m : Vec<Vec<i32>> = Vec::new();
+    let mut start_pos : Vec<(i32, i32)> = Vec::new();
+    let (mut ey, mut ex) = (0, 0);
+    for (y, r) in v.iter().enumerate() {
+        m.push(Vec::new());
+        for (x, c) in r.chars().enumerate() {
+            m[y].push(
+                match c {
+                    'S' | 'a' => {
+                        start_pos.push((y as i32, x as i32));
+                        0i32
+                    },
+                    'E' => {
+                        (ey, ex) = (y, x);
+                        ('z' as u32 - 'a' as u32) as i32
+                    },
+                    _ => (c as u32 - 'a' as u32) as i32
+                });
+        }
+    }
+
+    let mut costs : Vec<i32> = Vec::new();
+    for (sy, sx) in start_pos.iter() {
+        costs.push(shortest_path_from(&m, *sy, *sx, ey, ex));
+    }
+    costs.sort();
+    dbg!(costs);
+
+    //let cost = shortest_path_from(&m, sy as i32, sx as i32, ey, ex);
+    //dbg!(start_pos);
 }
 
 fn main() {
@@ -111,8 +151,8 @@ fn main() {
     }
     let v = v;
 
-    part1(&v);
-    part2();
+    //part1(&v);
+    part2(&v);
 }
 
 #[cfg(test)]
