@@ -11,12 +11,6 @@ use std::io::stdin;
 use serde::{Deserialize, Serialize};
 use serde_json::{Result, Value};
 
-#[derive(Clone, Debug)]
-enum Node {
-    Nodes(Vec<usize>),
-    Val(u64)
-}
-
 fn print_prefix(d: u32) {
     for _ in 0..d {
         print!("  ");
@@ -35,39 +29,39 @@ fn compare(a: &Value, b: &Value, d: u32) -> Ordering {
     match (a, b) {
         (Value::Number(an), Value::Number(bn)) => {
             let (an, bn) = (an.as_u64().unwrap(), bn.as_u64().unwrap());
-            print_prefix(d);
-            println!("{an} vs {bn}");
+            //print_prefix(d);
+            //println!("{an} vs {bn}");
             an.cmp(&bn)
         },
         (Value::Number(an), Value::Array(bv)) => {
-            print_prefix(d);
+            //print_prefix(d);
             let n = an.as_u64().unwrap();
             let sb = serde_json::to_string(b).unwrap();
-            println!("{n} vs {sb}");
+            //println!("{n} vs {sb}");
 
-            print_mixed_type_prefix(d);
-            println!("{n} to [{n}] and retry comparison");
+            //print_mixed_type_prefix(d);
+            //println!("{n} to [{n}] and retry comparison");
 
             let av : Value = Value::Array(vec![a.clone(); 1]);
             compare(&av, b, d)
         },
         (Value::Array(av), Value::Number(bn)) => {
-            print_prefix(d);
+            //print_prefix(d);
             let n = bn.as_u64().unwrap();
             let sa = serde_json::to_string(a).unwrap();
-            println!("{sa} vs {n}");
+            //println!("{sa} vs {n}");
 
-            print_mixed_type_prefix(d);
-            println!("{n} to [{n}] and retry comparison");
+            //print_mixed_type_prefix(d);
+            //println!("{n} to [{n}] and retry comparison");
 
             let bv : Value = Value::Array(vec![b.clone(); 1]);
             compare(a, &bv, d)
         },
         (Value::Array(av), Value::Array(bv)) => {
-            print_prefix(d);
+            //print_prefix(d);
             let sa = serde_json::to_string(a).unwrap();
             let sb = serde_json::to_string(b).unwrap();
-            println!("{sa} vs {sb}");
+            //println!("{sa} vs {sb}");
 
             let mut avitr = av.iter();
             let mut bvitr = bv.iter();
@@ -98,10 +92,46 @@ fn compare(a: &Value, b: &Value, d: u32) -> Ordering {
     }
 }
 
-fn part1() {
+fn part1(data: &Vec<(Value, Value)>) {
+    let mut vcorrect:Vec<usize> = Vec::new();
+    for (i, (a, b)) in data.iter().enumerate() {
+        println!("== Pair {} ==", i + 1);
+        let order = compare(a, b, 0);
+        let in_order = order == Ordering::Less || order == Ordering::Equal;
+        println!("{}: {in_order}", i + 1);
+        if in_order {
+            vcorrect.push(i + 1);
+        }
+    }
+    println!("Sum of indices: {}", vcorrect.iter().sum::<usize>());
 }
 
-fn part2() {
+fn part2(data: &Vec<(Value, Value)>) {
+    let mut d: Vec<Value> = Vec::new();
+    for (a, b) in data.iter() {
+        d.push(a.clone());
+        d.push(b.clone());
+    }
+    d.push(serde_json::from_str("[[2]]").unwrap());
+    d.push(serde_json::from_str("[[6]]").unwrap());
+
+    d.sort_by(|a, b| compare(a, b, 0));
+
+    let mut key_2 = 0;
+    let mut key_6 = 0;
+    for (i, v) in d.iter().enumerate() {
+        let s: String = serde_json::to_string(v).unwrap();
+        if s == "[[2]]" {
+            key_2 = i + 1;
+        } else if s == "[[6]]" {
+            key_6 = i + 1;
+        }
+        if key_2 != 0 && key_6 != 0 {
+            break;
+        }
+    }
+
+    println!("Decoder key: {}", key_2 * key_6);
 }
 
 fn main() {
@@ -121,21 +151,9 @@ fn main() {
         data.push((a, b));
     }
 
-    let mut vcorrect:Vec<usize> = Vec::new();
-    for (i, (a, b)) in data.iter().enumerate() {
-        println!("== Pair {} ==", i + 1);
-        let order = compare(a, b, 0);
-        let in_order = order == Ordering::Less || order == Ordering::Equal;
-        println!("{}: {in_order}", i + 1);
-        if in_order {
-            vcorrect.push(i + 1);
-        }
-    }
-    println!("Sum of indices: {}", vcorrect.iter().sum::<usize>());
-
     // dbg!(data);
-    part1();
-    part2();
+    //part1(&data);
+    part2(&data);
 }
 
 #[cfg(test)]
