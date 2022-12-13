@@ -17,50 +17,61 @@ enum Node {
     Val(u64)
 }
 
-fn build_node(v: &serde_json::Value, nodes: &mut Vec<Node>, p: usize) {
-    match v {
-        Value::Number(n) => {
-            let nnode = Node::Val(n.as_u64().unwrap());
-            nodes.push(nnode);
-            let idx = nodes.len() - 1;
-            match (nodes[p]) {
-                Node::Nodes(ref mut nref) => nref.push(idx),
-                _ => unreachable!(),
-            }
-        },
-        Value::Array(arr) => {
-            nodes.push(Node::Nodes(Vec::new()));
-            let idx = nodes.len() - 1;
-            if p != usize::MAX {
-                match (nodes[p]) {
-                    Node::Nodes(ref mut nref) => nref.push(idx),
-                    _ => unreachable!(),
-                }
-            }
-            for val in arr.iter() {
-                build_node(val, nodes, idx);
-            }
-        },
-        _ => unreachable!(),
-    };
+fn print_prefix(d: u32) {
+    for _ in 0..d {
+        print!("  ");
+    }
+    print!("-- Compare ");
 }
 
+fn compare(a: &Value, b: &Value, d: u32) -> Ordering {
+    match (a, b) {
+        (Value::Number(an), Value::Number(bn)) => {
+            let (an, bn) = (an.as_u64().unwrap(), bn.as_u64().unwrap());
+            print_prefix(d);
+            println!("{an} vs {bn}");
+            an.cmp(&bn)
+        },
+        (Value::Number(an), Value::Array(bv)) => {
+            let av : Value = Value::Array(vec![a.clone(); 1]);
+            compare(&av, b, d)
+        },
+        (Value::Array(av), Value::Number(bn)) => {
+            let bv : Value = Value::Array(vec![b.clone(); 1]);
+            compare(a, &bv, d)
+        },
+        (Value::Array(av), Value::Array(bv)) => {
+            print_prefix(d);
+            let sa = serde_json::to_string(a).unwrap();
+            let sb = serde_json::to_string(b).unwrap();
+            println!("{sa} vs {sb}");
 
+            let mut avitr = av.iter();
+            let mut bvitr = bv.iter();
 
-//fn compare(a: &Value, b: &Value) -> Ordering {
-//    match a {
-//        Value::Number(an) => {
-//            let an = an.as_u64().unwrap();
-//            match b {
-//                Value::Number(bn) => an.cmp(&bn.as_u64().unwrap()),
-//                Value::Array(barr) => {
-//                    if barr.is_empty()
-//                _ => Ordering::Less,
-//            }
-//        },
-//        _ => Ordering::Less,
-//    }
-//}
+            let mut anxt = avitr.next();
+            let mut bnxt = bvitr.next();
+            while anxt.is_some() && bnxt.is_some() {
+                let cmp = compare(anxt.unwrap(), bnxt.unwrap(), d + 1);
+                if cmp == Ordering::Less {
+                    return Ordering::Less;
+                } else if cmp == Ordering::Greater {
+                    return Ordering::Greater;
+                }
+                anxt = avitr.next();
+                bnxt = bvitr.next();
+            }
+            if anxt.is_none() {
+                Ordering::Less
+            } else if bnxt.is_none() {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        },
+        _ => Ordering::Equal
+    }
+}
 
 fn part1() {
 }
@@ -85,10 +96,18 @@ fn main() {
         data.push((a, b));
     }
 
+    let mut vcorrect:Vec<usize> = Vec::new();
+    for (i, (a, b)) in data.iter().enumerate() {
+        println!("== Pair {} ==", i + 1);
+        let order = compare(a, b, 0) != Ordering::Greater;
+        println!("{}: {order}", i + 1);
+        if order {
+            vcorrect.push(i + 1);
+        }
+    }
+    println!("Sum of indices: {}", vcorrect.iter().sum::<usize>());
+
     // dbg!(data);
-
-    let mut m: Vec<Node> = Vec::new();
-
     part1();
     part2();
 }
