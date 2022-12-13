@@ -21,7 +21,14 @@ fn print_prefix(d: u32) {
     for _ in 0..d {
         print!("  ");
     }
-    print!("-- Compare ");
+    print!("- Compare ");
+}
+
+fn print_mixed_type_prefix(d: u32) {
+    for _ in 0..d+1 {
+        print!("  ");
+    }
+    print!("- Mixed types; convert ");
 }
 
 fn compare(a: &Value, b: &Value, d: u32) -> Ordering {
@@ -33,10 +40,26 @@ fn compare(a: &Value, b: &Value, d: u32) -> Ordering {
             an.cmp(&bn)
         },
         (Value::Number(an), Value::Array(bv)) => {
+            print_prefix(d);
+            let n = an.as_u64().unwrap();
+            let sb = serde_json::to_string(b).unwrap();
+            println!("{n} vs {sb}");
+
+            print_mixed_type_prefix(d);
+            println!("{n} to [{n}] and retry comparison");
+
             let av : Value = Value::Array(vec![a.clone(); 1]);
             compare(&av, b, d)
         },
         (Value::Array(av), Value::Number(bn)) => {
+            print_prefix(d);
+            let n = bn.as_u64().unwrap();
+            let sa = serde_json::to_string(a).unwrap();
+            println!("{sa} vs {n}");
+
+            print_mixed_type_prefix(d);
+            println!("{n} to [{n}] and retry comparison");
+
             let bv : Value = Value::Array(vec![b.clone(); 1]);
             compare(a, &bv, d)
         },
@@ -62,11 +85,13 @@ fn compare(a: &Value, b: &Value, d: u32) -> Ordering {
                 bnxt = bvitr.next();
             }
             if anxt.is_none() {
-                Ordering::Less
-            } else if bnxt.is_none() {
-                Ordering::Greater
+                if bnxt.is_none() {
+                    Ordering::Equal
+                } else {
+                    Ordering::Less
+                }
             } else {
-                Ordering::Equal
+                Ordering::Greater
             }
         },
         _ => Ordering::Equal
@@ -80,7 +105,7 @@ fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -99,9 +124,10 @@ fn main() {
     let mut vcorrect:Vec<usize> = Vec::new();
     for (i, (a, b)) in data.iter().enumerate() {
         println!("== Pair {} ==", i + 1);
-        let order = compare(a, b, 0) != Ordering::Greater;
-        println!("{}: {order}", i + 1);
-        if order {
+        let order = compare(a, b, 0);
+        let in_order = order == Ordering::Less || order == Ordering::Equal;
+        println!("{}: {in_order}", i + 1);
+        if in_order {
             vcorrect.push(i + 1);
         }
     }
