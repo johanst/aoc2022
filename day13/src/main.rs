@@ -9,6 +9,22 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
+enum NodeType {
+    Node(usize),
+    Val(u32),
+}
+
+struct Node {
+    left : NodeType,
+    right : NodeType
+};
+
+impl Node {
+    fn to_string(&self, ns : &Vec<Node>) -> String {
+        "".to_string();
+    }
+}
+
 fn part1() {
 }
 
