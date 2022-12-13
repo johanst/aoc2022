@@ -5,27 +5,62 @@
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::collections::HashMap;
-use std::cmp;
+use std::cmp::*;
 use std::fmt;
 use std::io::stdin;
 use serde::{Deserialize, Serialize};
 use serde_json::{Result, Value};
 
-enum NodeType {
-    Node(usize),
-    Val(u32),
+#[derive(Clone, Debug)]
+enum Node {
+    Nodes(Vec<usize>),
+    Val(u64)
 }
 
-struct Node {
-    left : NodeType,
-    right : NodeType
+fn build_node(v: &serde_json::Value, nodes: &mut Vec<Node>, p: usize) {
+    match v {
+        Value::Number(n) => {
+            let nnode = Node::Val(n.as_u64().unwrap());
+            nodes.push(nnode);
+            let idx = nodes.len() - 1;
+            match (nodes[p]) {
+                Node::Nodes(ref mut nref) => nref.push(idx),
+                _ => unreachable!(),
+            }
+        },
+        Value::Array(arr) => {
+            nodes.push(Node::Nodes(Vec::new()));
+            let idx = nodes.len() - 1;
+            if p != usize::MAX {
+                match (nodes[p]) {
+                    Node::Nodes(ref mut nref) => nref.push(idx),
+                    _ => unreachable!(),
+                }
+            }
+            for val in arr.iter() {
+                build_node(val, nodes, idx);
+            }
+        },
+        _ => unreachable!(),
+    };
 }
 
-impl Node {
-    fn to_string(&self, ns : &Vec<Node>) -> String {
-        "".to_string()
-    }
-}
+
+
+//fn compare(a: &Value, b: &Value) -> Ordering {
+//    match a {
+//        Value::Number(an) => {
+//            let an = an.as_u64().unwrap();
+//            match b {
+//                Value::Number(bn) => an.cmp(&bn.as_u64().unwrap()),
+//                Value::Array(barr) => {
+//                    if barr.is_empty()
+//                _ => Ordering::Less,
+//            }
+//        },
+//        _ => Ordering::Less,
+//    }
+//}
 
 fn part1() {
 }
@@ -50,7 +85,9 @@ fn main() {
         data.push((a, b));
     }
 
-    dbg!(data);
+    // dbg!(data);
+
+    let mut m: Vec<Node> = Vec::new();
 
     part1();
     part2();
