@@ -16,6 +16,16 @@ enum Square {
     Stone
 }
 
+impl Square {
+    fn to_char(&self) -> char{
+        match self {
+            Square::Empty => '.',
+            Square::Path => '#',
+            Square::Stone => 'o',
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Grid {
     xmin: usize,
@@ -27,6 +37,12 @@ struct Grid {
 
 impl Grid {
     fn draw(&self) {
+        for y in 0..=self.ymax {
+            for x in self.xmin..=self.xmax {
+                print!("{}", self.map[y][x - self.xmin].to_char());
+            }
+            println!();
+        }
     }
 }
 
@@ -93,11 +109,12 @@ fn main() {
             } else {
                 unreachable!();
             }
-            dbg!(xs, ys, xe, ye);
+            //dbg!(xs, ys, xe, ye);
         }
     }
 
-    dbg!(&g);
+    //dbg!(&g);
+    g.draw();
 
     part1();
     part2();
