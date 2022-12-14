@@ -37,7 +37,7 @@ struct Grid {
 
 impl Grid {
     fn draw(&self) {
-        for y in 0..=self.ymax {
+        for y in 0..self.map.len() {
             for x in self.xmin..=self.xmax {
                 print!("{}", self.map[y][x - self.xmin].to_char());
             }
@@ -46,7 +46,34 @@ impl Grid {
     }
 }
 
-fn part1(mut g: Grid) {
+fn part1(vtmp: &Vec<Vec<(usize, usize)>>, mut g: Grid) {
+    for _ in 0..g.ymax+1 {
+        g.map.push(vec![Square::Empty; g.xmax - g.xmin + 1]);
+    }
+
+    for row in vtmp.iter() {
+        for w in row.windows(2) {
+            let (xs, ys) = w[0];
+            let (xe, ye) = w[1];
+            if xs == xe {
+                if ys > ye {
+                    (ye..=ys).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
+                } else {
+                    (ys..=ye).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
+                }
+            } else if ys == ye {
+                if xs > xe {
+                    (xe..=xs).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
+                } else {
+                    (xs..=xe).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
+                }
+            } else {
+                unreachable!();
+            }
+            //dbg!(xs, ys, xe, ye);
+        }
+    }
+
     let mut n = 0;
     loop {
         let (mut x, mut y) = (500, 0);
@@ -96,7 +123,90 @@ fn part1(mut g: Grid) {
     println!("Units of sand: {n}");
 }
 
-fn part2() {
+fn part2(vtmp: &Vec<Vec<(usize, usize)>>, mut g: Grid) {
+    dbg!(g.xmin, g.xmax, g.ymin, g.ymax);
+    g.xmin = 500 - (g.ymax + 3);
+    g.xmax = 500 + (g.ymax + 3);
+
+    for _ in 0..g.ymax+1 {
+        g.map.push(vec![Square::Empty; g.xmax - g.xmin + 1]);
+    }
+
+    for row in vtmp.iter() {
+        for w in row.windows(2) {
+            let (xs, ys) = w[0];
+            let (xe, ye) = w[1];
+            if xs == xe {
+                if ys > ye {
+                    (ye..=ys).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
+                } else {
+                    (ys..=ye).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
+                }
+            } else if ys == ye {
+                if xs > xe {
+                    (xe..=xs).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
+                } else {
+                    (xs..=xe).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
+                }
+            } else {
+                unreachable!();
+            }
+            //dbg!(xs, ys, xe, ye);
+        }
+    }
+
+    let l = g.map[0].len();
+    g.map.push(vec![Square::Empty; l]);
+    g.map.push(vec![Square::Rock; l]);
+
+    let mut n = 0;
+
+    loop {
+        let (mut x, mut y) = (500, 0);
+        let resting = loop {
+            // down
+            if y == g.ymax {
+                break false;
+            }
+            if g.map[y + 1][x - g.xmin] == Square::Empty {
+                y += 1;
+                continue;
+            }
+
+            // left
+            if x == g.xmin {
+                break false;
+            }
+            if g.map[y + 1][x - 1 - g.xmin] == Square::Empty {
+                x -= 1;
+                continue;
+            }
+
+            // right
+            if x == g.xmax {
+                break false;
+            }
+            if g.map[y + 1][x + 1 - g.xmin] == Square::Empty {
+                x += 1;
+                continue;
+            }
+
+            break true;
+        };
+
+        if !resting {
+            break;
+        }
+
+        n += 1;
+        g.map[y][x - g.xmin] = Square::Sand;
+    };
+
+    println!();
+    g.draw();
+    println!();
+
+    println!("Units of sand: {n}");
 }
 
 fn main() {
@@ -133,38 +243,11 @@ fn main() {
         vtmp.push(rocks);
     }
 
-    for _ in 0..g.ymax+1 {
-        g.map.push(vec![Square::Empty; g.xmax - g.xmin + 1]);
-    }
-
-    for row in vtmp.iter() {
-        for w in row.windows(2) {
-            let (xs, ys) = w[0];
-            let (xe, ye) = w[1];
-            if xs == xe {
-                if ys > ye {
-                    (ye..=ys).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
-                } else {
-                    (ys..=ye).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
-                }
-            } else if ys == ye {
-                if xs > xe {
-                    (xe..=xs).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
-                } else {
-                    (xs..=xe).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
-                }
-            } else {
-                unreachable!();
-            }
-            //dbg!(xs, ys, xe, ye);
-        }
-    }
 
     //dbg!(&g);
-    g.draw();
 
-    part1(g.clone());
-    part2();
+    //part1(&vtmp, g.clone());
+    part2(&vtmp, g);
 }
 
 #[cfg(test)]
