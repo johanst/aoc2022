@@ -9,24 +9,24 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Square {
     Empty,
-    Path,
-    Stone
+    Rock,
+    Sand
 }
 
 impl Square {
     fn to_char(&self) -> char{
         match self {
             Square::Empty => '.',
-            Square::Path => '#',
-            Square::Stone => 'o',
+            Square::Rock => '#',
+            Square::Sand => 'o',
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Grid {
     xmin: usize,
     xmax: usize,
@@ -46,7 +46,54 @@ impl Grid {
     }
 }
 
-fn part1() {
+fn part1(mut g: Grid) {
+    let mut n = 0;
+    loop {
+        let (mut x, mut y) = (500, 0);
+        let resting = loop {
+            // down
+            if y == g.ymax {
+                break false;
+            }
+            if g.map[y + 1][x - g.xmin] == Square::Empty {
+                y += 1;
+                continue;
+            }
+
+            // left
+            if x == g.xmin {
+                break false;
+            }
+            if g.map[y + 1][x - 1 - g.xmin] == Square::Empty {
+                x -= 1;
+                continue;
+            }
+
+            // right
+            if x == g.xmax {
+                break false;
+            }
+            if g.map[y + 1][x + 1 - g.xmin] == Square::Empty {
+                x += 1;
+                continue;
+            }
+
+            break true;
+        };
+
+        if !resting {
+            break;
+        }
+
+        n += 1;
+        g.map[y][x - g.xmin] = Square::Sand;
+    };
+
+    println!();
+    g.draw();
+    println!();
+
+    println!("Units of sand: {n}");
 }
 
 fn part2() {
@@ -70,7 +117,7 @@ fn main() {
     };
     let mut vtmp: Vec<Vec<(usize, usize)>> = Vec::new();
     for row in v.iter() {
-        let paths = row.split_whitespace()
+        let rocks = row.split_whitespace()
             .filter(|s| *s != "->")
             .map(|s| {
                 let mut sitr = s.split(",");
@@ -83,7 +130,7 @@ fn main() {
                 (x, y)
             })
             .collect::<Vec<(usize, usize)>>();
-        vtmp.push(paths);
+        vtmp.push(rocks);
     }
 
     for _ in 0..g.ymax+1 {
@@ -96,15 +143,15 @@ fn main() {
             let (xe, ye) = w[1];
             if xs == xe {
                 if ys > ye {
-                    (ye..=ys).for_each(|y| g.map[y][xs - g.xmin] = Square::Path);
+                    (ye..=ys).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
                 } else {
-                    (ys..=ye).for_each(|y| g.map[y][xs - g.xmin] = Square::Path);
+                    (ys..=ye).for_each(|y| g.map[y][xs - g.xmin] = Square::Rock);
                 }
             } else if ys == ye {
                 if xs > xe {
-                    (xe..=xs).for_each(|x| g.map[ys][x - g.xmin] = Square::Path);
+                    (xe..=xs).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
                 } else {
-                    (xs..=xe).for_each(|x| g.map[ys][x - g.xmin] = Square::Path);
+                    (xs..=xe).for_each(|x| g.map[ys][x - g.xmin] = Square::Rock);
                 }
             } else {
                 unreachable!();
@@ -116,7 +163,7 @@ fn main() {
     //dbg!(&g);
     g.draw();
 
-    part1();
+    part1(g.clone());
     part2();
 }
 
