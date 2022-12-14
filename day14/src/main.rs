@@ -9,6 +9,27 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
+#[derive(Debug, Clone)]
+enum Square {
+    Empty,
+    Path,
+    Stone
+}
+
+#[derive(Debug)]
+struct Grid {
+    xmin: usize,
+    xmax: usize,
+    ymin: usize,
+    ymax: usize,
+    map: Vec<Vec<Square>>,
+}
+
+impl Grid {
+    fn draw(&self) {
+    }
+}
+
 fn part1() {
 }
 
@@ -24,7 +45,59 @@ fn main() {
     }
     let v = v;
 
-    dbg!(v);
+    let mut g = Grid {
+        xmin: usize::MAX,
+        xmax: 0,
+        ymin: usize::MAX,
+        ymax: 0,
+        map: Vec::new()
+    };
+    let mut vtmp: Vec<Vec<(usize, usize)>> = Vec::new();
+    for row in v.iter() {
+        let paths = row.split_whitespace()
+            .filter(|s| *s != "->")
+            .map(|s| {
+                let mut sitr = s.split(",");
+                let x: usize = sitr.next().unwrap().parse::<usize>().unwrap();
+                let y: usize = sitr.next().unwrap().parse::<usize>().unwrap();
+                g.xmin = cmp::min(x, g.xmin);
+                g.xmax = cmp::max(x, g.xmax);
+                g.ymin = cmp::min(y, g.ymin);
+                g.ymax = cmp::max(y, g.ymax);
+                (x, y)
+            })
+            .collect::<Vec<(usize, usize)>>();
+        vtmp.push(paths);
+    }
+
+    for _ in 0..g.ymax+1 {
+        g.map.push(vec![Square::Empty; g.xmax - g.xmin + 1]);
+    }
+
+    for row in vtmp.iter() {
+        for w in row.windows(2) {
+            let (xs, ys) = w[0];
+            let (xe, ye) = w[1];
+            if xs == xe {
+                if ys > ye {
+                    (ye..=ys).for_each(|y| g.map[y][xs - g.xmin] = Square::Path);
+                } else {
+                    (ys..=ye).for_each(|y| g.map[y][xs - g.xmin] = Square::Path);
+                }
+            } else if ys == ye {
+                if xs > xe {
+                    (xe..=xs).for_each(|x| g.map[ys][x - g.xmin] = Square::Path);
+                } else {
+                    (xs..=xe).for_each(|x| g.map[ys][x - g.xmin] = Square::Path);
+                }
+            } else {
+                unreachable!();
+            }
+            dbg!(xs, ys, xe, ye);
+        }
+    }
+
+    dbg!(&g);
 
     part1();
     part2();
