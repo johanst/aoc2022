@@ -165,27 +165,18 @@ fn part2(vtmp: &Vec<Vec<(usize, usize)>>, mut g: Grid) {
         let (mut x, mut y) = (500, 0);
         let resting = loop {
             // down
-            if y == g.ymax {
-                break false;
-            }
             if g.map[y + 1][x - g.xmin] == Square::Empty {
                 y += 1;
                 continue;
             }
 
             // left
-            if x == g.xmin {
-                break false;
-            }
             if g.map[y + 1][x - 1 - g.xmin] == Square::Empty {
                 x -= 1;
                 continue;
             }
 
             // right
-            if x == g.xmax {
-                break false;
-            }
             if g.map[y + 1][x + 1 - g.xmin] == Square::Empty {
                 x += 1;
                 continue;
@@ -194,23 +185,23 @@ fn part2(vtmp: &Vec<Vec<(usize, usize)>>, mut g: Grid) {
             break true;
         };
 
-        if !resting {
-            break;
-        }
-
         n += 1;
         g.map[y][x - g.xmin] = Square::Sand;
+
+        if y == 0 && x == 500 {
+            break;
+        }
     };
 
-    println!();
-    g.draw();
-    println!();
+    //println!();
+    //g.draw();
+    //println!();
 
     println!("Units of sand: {n}");
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
