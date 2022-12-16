@@ -7,9 +7,11 @@ use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::collections::HashMap;
 use std::cmp;
+use std::cmp::Reverse;
 use std::fmt;
 use std::io::stdin;
 
+// for finding max pressure
 #[derive(Debug, Default, PartialEq, PartialOrd, Eq, Ord, Clone)]
 struct Step {
     totpot : u32,  // upper limit of possible max released pressure
@@ -17,6 +19,13 @@ struct Step {
     step : u32,    // Step nbr, 30=final step
     pos : usize,   // node position (idx in idx2vid and map)
     valves : u64   // valve bitmask (bit0=valve idx0 released, bit1=valve idx1 released, etc...)
+}
+
+// for finding shortest path between valve positions
+#[derive(Debug, Default, PartialEq, PartialOrd, Eq, Ord, Clone)]
+struct Pos {
+    step : u32,
+    pos : usize
 }
 
 #[derive(Debug, Default, Clone)]
@@ -87,6 +96,32 @@ impl State {
         p
     }
 
+    fn shortest_path(&self, a : usize, b : usize) -> u32 {
+        let mut vis : HashMap<usize, u32> = HashMap::new();
+        vis.insert(0, 0);
+        let mut heap = BinaryHeap::new();
+        heap.push(Reverse(Pos{step:0,pos:0}));
+        while let Some(Reverse(pos)) = heap.pop() {
+            //dbg!(&pos);
+            //let mut dummy : String = "".to_string();
+            //stdin().read_line(&mut dummy);
+
+            if pos.pos == b {
+                return pos.step;
+            }
+
+            for path in self.map[pos.pos].paths.iter() {
+                //dbg!(path);
+                if pos.step < vis.get(path).cloned().unwrap_or(u32::MAX) {
+                    heap.push(Reverse(Pos{step:pos.step+1,pos:*path}));
+                    vis.insert(*path, pos.step+1);
+                }
+            }
+        }
+
+        u32::MAX
+    }
+
     fn find_max(&self) {
         let mut heap = BinaryHeap::new();
         heap.push(Step {
@@ -148,7 +183,9 @@ fn main() {
     let v = v;
 
     let st = State::new(&v);
-    st.find_max();
+    //st.find_max();
+    let sp = st.shortest_path(st.vid2idx("AA"),st.vid2idx("EE"));
+    dbg!(sp);
 
     //dbg!(&st);
     //let p = st.get_current_released_pressure(0b11_0000_1100);
