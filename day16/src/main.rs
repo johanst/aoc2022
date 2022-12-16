@@ -16,7 +16,7 @@ fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -24,7 +24,13 @@ fn main() {
     }
     let v = v;
 
-    dbg!(v);
+    let mut vid2idx : HashMap(<&str, usize>) = HashMap::new();
+    v.iter().enumerate()
+        .for_each(|n vid| {
+            vi2idx.insert()
+                vid.split_whitespace().skip(1).take(1)
+
+    dbg!(&v, v.len());
 
     part1();
     part2();
