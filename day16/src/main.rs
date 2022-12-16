@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
+use std::collections::BinaryHeap;
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::collections::HashMap;
@@ -9,7 +10,7 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
-#[derive(Debug)]
+#[derive(Debug, Default, PartialEq, PartialOrd, Eq, Ord, Clone)]
 struct Step {
     totpot : u32,  // upper limit of possible max released pressure
     current : u32, // actual total released pressure
@@ -29,6 +30,7 @@ struct State {
     vid2idx : HashMap<String, usize>,
     idx2vid : Vec<String>,
     map : Vec<Node>,
+    rates_total : u32,
 }
 
 impl State {
@@ -37,6 +39,7 @@ impl State {
             vid2idx : HashMap::new(),
             idx2vid : Vec::new(),
             map : Vec::new(),
+            rates_total : 0,
         };
         for (n, row) in v.iter().enumerate() {
             let vid = row.split_whitespace().skip(1).next().unwrap();
@@ -60,6 +63,8 @@ impl State {
             st.map[n] = Node { rate, paths };
         }
 
+        st.rates_total = st.map.iter().map(|n| n.rate).sum();
+
         st
     }
 
@@ -81,6 +86,49 @@ impl State {
         }
         p
     }
+
+    fn find_max(&self) {
+        let mut heap = BinaryHeap::new();
+        heap.push(Step {
+            pos: self.vid2idx("AA"),
+            ..Default::default()
+        });
+
+        //let max_theoretical
+        while let Some(step) = heap.pop() {
+            //dbg!(&step);
+            //let mut dummy : String = "".to_string();
+            //stdin().read_line(&mut dummy);
+
+            if step.step == 30 {
+                println!("Reached step 30, released pressure: {}", step.current);
+                return;
+            }
+
+            // turn on valve if valve is not already on
+            if self.map[step.pos].rate != 0 && (1 << step.pos) & step.valves != 0 {
+                let mut step_next = step.clone();
+                step_next.step += 1;
+                step_next.current += self.get_current_released_pressure(
+                    step.valves);
+                step_next.valves |= 1 << step.pos;
+                step_next.totpot = (30 - step_next.step) * self.rates_total + step_next.current;
+                heap.push(step_next);
+            }
+
+            // paths to walk
+            for path in self.map[step.pos].paths.iter() {
+                let mut step_next = step.clone();
+                step_next.step += 1;
+                step_next.current += self.get_current_released_pressure(
+                    step.valves);
+                step_next.pos = *path;
+                step_next.totpot = (30 - step_next.step) * self.rates_total + step_next.current;
+
+                heap.push(step_next);
+            }
+        }
+    }
 }
 
 fn part1() {
@@ -99,8 +147,9 @@ fn main() {
     let v = v;
 
     let st = State::new(&v);
+    st.find_max();
 
-    dbg!(&st);
+    //dbg!(&st);
     //let p = st.get_current_released_pressure(0b11_0000_1100);
     //dbg!(p);
 
