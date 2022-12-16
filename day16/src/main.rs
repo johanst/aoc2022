@@ -106,13 +106,14 @@ impl State {
             }
 
             // turn on valve if valve is not already on
-            if self.map[step.pos].rate != 0 && (1 << step.pos) & step.valves != 0 {
+            if self.map[step.pos].rate != 0 && (1 << step.pos) & step.valves == 0 {
                 let mut step_next = step.clone();
                 step_next.step += 1;
                 step_next.current += self.get_current_released_pressure(
                     step.valves);
                 step_next.valves |= 1 << step.pos;
                 step_next.totpot = (30 - step_next.step) * self.rates_total + step_next.current;
+
                 heap.push(step_next);
             }
 
