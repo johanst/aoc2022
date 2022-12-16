@@ -40,6 +40,7 @@ struct State {
     idx2vid : Vec<String>,
     map : Vec<Node>,
     rates_total : u32,
+    sp : HashMap<(usize,usize), u32>,
 }
 
 impl State {
@@ -49,6 +50,7 @@ impl State {
             idx2vid : Vec::new(),
             map : Vec::new(),
             rates_total : 0,
+            sp : HashMap::new(),
         };
         for (n, row) in v.iter().enumerate() {
             let vid = row.split_whitespace().skip(1).next().unwrap();
@@ -73,6 +75,17 @@ impl State {
         }
 
         st.rates_total = st.map.iter().map(|n| n.rate).sum();
+
+        let vv : Vec<usize> = st.map.iter().enumerate()
+            .filter_map(|(n, nd)| if nd.rate != 0 { Some(n) } else { None })
+            .collect::<Vec<usize>>();
+        for a in vv.iter() {
+            for b in vv.iter() {
+                if a != b {
+                    st.sp.insert((*a, *b), st.shortest_path(*a, *b));
+                }
+            }
+        }
 
         st
     }
@@ -184,10 +197,9 @@ fn main() {
 
     let st = State::new(&v);
     //st.find_max();
-    let sp = st.shortest_path(st.vid2idx("AA"),st.vid2idx("EE"));
-    dbg!(sp);
+    //let sp = st.shortest_path(st.vid2idx("AA"),st.vid2idx("EE"));
 
-    //dbg!(&st);
+    dbg!(&st);
     //let p = st.get_current_released_pressure(0b11_0000_1100);
     //dbg!(p);
 
