@@ -9,6 +9,15 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
+#[derive(Debug)]
+struct Step {
+    totpot : u32,  // upper limit of possible max released pressure
+    current : u32, // actual total released pressure
+    step : u32,    // Step nbr, 30=final step
+    pos : usize,   // node position (idx in idx2vid and map)
+    valves : u64   // valve bitmask (bit0=valve idx0 released, bit1=valve idx1 released, etc...)
+}
+
 #[derive(Debug, Default, Clone)]
 struct Node {
     rate : u32,
@@ -61,6 +70,17 @@ impl State {
     fn idx2vid(&self, idx : usize) -> String {
         self.idx2vid[idx].clone()
     }
+
+    fn get_current_released_pressure(&self, mut valves : u64) -> u32 {
+        let mut p = 0;
+        for node in self.map.iter() {
+            if valves & 1 == 1 {
+                p += node.rate;
+            }
+            valves >>= 1;
+        }
+        p
+    }
 }
 
 fn part1() {
@@ -80,7 +100,9 @@ fn main() {
 
     let st = State::new(&v);
 
-    dbg!(st);
+    dbg!(&st);
+    //let p = st.get_current_released_pressure(0b11_0000_1100);
+    //dbg!(p);
 
     part1();
     part2();
