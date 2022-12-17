@@ -10,6 +10,7 @@ use std::cmp;
 use std::cmp::Reverse;
 use std::fmt;
 use std::io::stdin;
+use std::iter;
 
 // for finding max pressure
 #[derive(Debug, Default, PartialEq, PartialOrd, Eq, Ord, Clone)]
@@ -41,6 +42,7 @@ struct State {
     map : Vec<Node>,
     rates_total : u32,
     sp : HashMap<(usize,usize), u32>,
+    idx_with_valves : Vec<usize>,
 }
 
 impl State {
@@ -51,6 +53,8 @@ impl State {
             map : Vec::new(),
             rates_total : 0,
             sp : HashMap::new(),
+            idx_with_valves : Vec::new(),
+
         };
         for (n, row) in v.iter().enumerate() {
             let vid = row.split_whitespace().skip(1).next().unwrap();
@@ -76,13 +80,13 @@ impl State {
 
         st.rates_total = st.map.iter().map(|n| n.rate).sum();
 
-        let vv : Vec<usize> = st.map.iter().enumerate()
+        st.idx_with_valves = st.map.iter().enumerate()
             .filter_map(|(n, nd)| if nd.rate != 0 { Some(n) } else { None })
             .collect::<Vec<usize>>();
-        for a in vv.iter() {
-            for b in vv.iter() {
+        for a in st.idx_with_valves.iter().cloned().chain(iter::once(0)) {
+            for b in st.idx_with_valves.iter().cloned() {
                 if a != b {
-                    st.sp.insert((*a, *b), st.shortest_path(*a, *b));
+                    st.sp.insert((a, b), st.shortest_path(a, b));
                 }
             }
         }
@@ -153,26 +157,45 @@ impl State {
                 return;
             }
 
-            // turn on valve if valve is not already on
-            if self.map[step.pos].rate != 0 && (1 << step.pos) & step.valves == 0 {
+            let mut path_chosen = false;
+            for path in self.idx_with_valves.iter().filter(|p| **p != step.pos) {
+                if (1 << *path) & step.valves != 0 {
+                    // valve already on
+                    continue;
+                }
+                let sd : u32 = self.sp.get(&(step.pos, *path)).cloned().unwrap();
+                if sd + 1 >= 30 {
+                    // too far, won't buy us anything
+                    continue;
+                }
+
+                path_chosen = true;
+                // cost of moving and turning on valve = sd + 1
                 let mut step_next = step.clone();
-                step_next.step += 1;
+                step_next.pos = *path;
+                step_next.step += sd + 1;
                 step_next.current += self.get_current_released_pressure(
-                    step.valves);
-                step_next.valves |= 1 << step.pos;
+                    step.valves) * (sd + 1);
+                step_next.valves |= 1 << *path;
                 step_next.totpot = (30 - step_next.step) * self.rates_total + step_next.current;
+
+                println!("-----");
+                dbg!(&step);
+                dbg!(&step_next);
+                let mut dummy : String = "".to_string();
+                stdin().read_line(&mut dummy);
 
                 heap.push(step_next);
+
             }
 
-            // paths to walk
-            for path in self.map[step.pos].paths.iter() {
+            // if we couldn't turn on any new valve, let's just stay here
+            if !path_chosen {
                 let mut step_next = step.clone();
-                step_next.step += 1;
+                step_next.step = 30;
                 step_next.current += self.get_current_released_pressure(
-                    step.valves);
-                step_next.pos = *path;
-                step_next.totpot = (30 - step_next.step) * self.rates_total + step_next.current;
+                    step.valves) * (30 - step.step);
+                step_next.totpot = step_next.current;
 
                 heap.push(step_next);
             }
@@ -196,10 +219,10 @@ fn main() {
     let v = v;
 
     let st = State::new(&v);
-    //st.find_max();
+    st.find_max();
     //let sp = st.shortest_path(st.vid2idx("AA"),st.vid2idx("EE"));
 
-    dbg!(&st);
+    //dbg!(&st);
     //let p = st.get_current_released_pressure(0b11_0000_1100);
     //dbg!(p);
 
