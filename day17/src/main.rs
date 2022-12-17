@@ -27,6 +27,18 @@ fn print_chamber(cha : &Vec<Vec<u8>>) {
     stdin().read_line(&mut dummy);
 }
 
+fn print_chamber_last_15(cha : &Vec<Vec<u8>>) {
+    for row in cha.iter().rev().take(15) {
+        for c in row.iter() {
+            print!("{}", char::from_u32(*c as u32).unwrap());
+        }
+        println!();
+    }
+
+    let mut dummy : String = "".to_string();
+    stdin().read_line(&mut dummy);
+}
+
 fn print_chamber_with_shape(cha : &Vec<Vec<u8>>,
                             s : &Vec<&str>,
                             xpos : i32,
@@ -129,6 +141,8 @@ fn main() {
     }
     assert_eq!(v.len(), 1);
     let v = v;
+    dbg!(v[0].len());
+    dbg!(v[0]);
 
     let mut chamber : Vec<Vec<u8>> = Vec::new();
     let vc = "+-------+".as_bytes().to_vec();
@@ -137,9 +151,15 @@ fn main() {
     //let knas = get_no_of_empty_rows(&chamber);
     //dbg!(knas);
 
+    let mut rock_count : u64 = 0;
+    let mut jet_count : u64 = 0;
     let mut shitr = shapes.iter().cycle();
     let mut jetitr = v[0].chars().cycle();
-    for _ in 0..2022 {
+    // 13345
+    //for _ in 0..2022 {
+    //for _ in 0..(5 * 2 * v[0].len() + 1) {
+    //for _ in 0..13345 {
+    loop {
         let shape = shitr.next().unwrap();
 
         // make sure we have three empty rows and enough row for our shape
@@ -162,6 +182,7 @@ fn main() {
         loop {
             // do the jet
             let jet = jetitr.next().unwrap();
+            jet_count += 1;
             let dx = match jet {
                 '<' => -1,
                 '>' => 1,
@@ -185,11 +206,34 @@ fn main() {
             //println!("Tower height: {}", tower_height(&chamber));
         }
 
+        rock_count += 1;
+        if rock_count % 5 == 0 && jet_count % v[0].len() as u64 == 0 {
+            break;
+        }
+
         //let jet = jetitr.next().unwrap();
     }
 
+    print_chamber_last_15(&chamber);
+    println!("Rock count: {}", rock_count);
     println!("Tower height: {}", tower_height(&chamber));
 
+    // 79089 height for 5 * 10091 (jet length * shape )
+    let ncyc : u64 = 1000000000000 / ( 5 * 10091 ); // 19819641
+    let rcyc : u64 = 1000000000000 % ( 5 * 10091 ); // 13345
+    // 20945 height for remainder 13345
+
+    // 608 height for 5 * 2 * 40 ( jet length * shape)
+    let exncyc : u64 = 1000000000000 / ( 5 * 2 * 40 ); // 2500000000
+    let exrcyc : u64 = 1000000000000 % ( 5 * 2 * 40 ); //
+
+    dbg!(ncyc, rcyc);
+    dbg!(exncyc, exrcyc);
+    let total : u64 = 19819641 * 79089 + 20945;
+    dbg!(total);
+    let extotal : u64 = 2500000000 * 608;
+    dbg!(extotal);
+    // 1567515607994 too low
 
     part1();
     part2();
