@@ -103,6 +103,10 @@ fn move_to_pos(cha : &mut Vec<Vec<u8>>,
     }
 }
 
+fn tower_height(cha : &Vec<Vec<u8>>) -> i32 {
+    cha.len() as i32 - 1 - get_no_of_empty_rows(cha)
+}
+
 fn main() {
     let lines = std::fs::read_to_string("shapes.txt").unwrap();
     let v = lines.split("\n\n").collect::<Vec<&str>>();
@@ -140,7 +144,7 @@ fn main() {
 
         // make sure we have three empty rows and enough row for our shape
         let num_empty = get_no_of_empty_rows(&chamber);
-        dbg!(num_empty);
+        //dbg!(num_empty);
         let addc = 3 - get_no_of_empty_rows(&chamber) + shape.len() as i32;
         if addc < 0 {
             for _ in 0..-addc {
@@ -154,7 +158,7 @@ fn main() {
         let mut xpos = 3;
         let mut ypos = chamber.len() as i32 - shape.len() as i32;
 
-        print_chamber_with_shape(&chamber, &shape, xpos, ypos);
+        //print_chamber_with_shape(&chamber, &shape, xpos, ypos);
         loop {
             // do the jet
             let jet = jetitr.next().unwrap();
@@ -166,21 +170,26 @@ fn main() {
             if can_move_to_pos(&chamber, &shape, xpos + dx, ypos) {
                 xpos += dx;
             }
-            print_chamber_with_shape(&chamber, &shape, xpos, ypos);
+            //print_chamber_with_shape(&chamber, &shape, xpos, ypos);
 
             // try to move down
             if !can_move_to_pos(&chamber, &shape, xpos, ypos - 1) {
                 move_to_pos(&mut chamber, &shape, xpos, ypos);
-                print_chamber(&chamber);
+                //print_chamber(&chamber);
                 break;
             } else {
                 ypos -= 1;
-                print_chamber_with_shape(&chamber, &shape, xpos, ypos);
+                //print_chamber_with_shape(&chamber, &shape, xpos, ypos);
             }
+
+            //println!("Tower height: {}", tower_height(&chamber));
         }
 
         //let jet = jetitr.next().unwrap();
     }
+
+    println!("Tower height: {}", tower_height(&chamber));
+
 
     part1();
     part2();
