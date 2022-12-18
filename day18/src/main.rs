@@ -22,7 +22,7 @@ fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -102,8 +102,25 @@ fn main() {
         }
     }
 
-    dbg!(contained);
+    dbg!(&contained);
     dbg!(open_space.len());
+
+    let mut num_surface_to_contained = 0;
+    for idx_from in 0..cubes.len() {
+        let offset = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)];
+        let (x, y, z) = cubes[idx_from].pos;
+        for (dx, dy, dz) in offset {
+            let adj_pos = (x + dx, y + dy, z + dz);
+            if contained.contains(&adj_pos) {
+                num_surface_to_contained += 1;
+            }
+        }
+    }
+
+    dbg!(num_surface_to_contained);
+
+    println!("Total number: {}", num_free - num_surface_to_contained);
+
 }
 
 #[cfg(test)]
