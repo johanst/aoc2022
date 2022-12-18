@@ -74,24 +74,30 @@ fn main() {
     let mut contained : HashSet<(i32,i32,i32)> = HashSet::new();
     let mut open_space : HashSet<(i32,i32,i32)> = HashSet::new();
     for (xstart, ystart, zstart) in adj_cubes {
+        dbg!(xstart, ystart, zstart);
         let mut visited : HashSet<(i32,i32,i32)> = HashSet::new();
         let mut inspect_cubes : VecDeque<(i32,i32,i32)> = VecDeque::new();
+        let mut inspect_cubes_set : HashSet<(i32,i32,i32)> = HashSet::new();
         inspect_cubes.push_back((xstart, ystart, zstart));
         // until we know the state of our
         let mut is_open_space = false;
         while !inspect_cubes.is_empty() {
             let (x, y, z) = inspect_cubes.pop_front().unwrap();
+            inspect_cubes_set.remove(&(x, y, z));
             visited.insert((x, y, z));
-            if x == 0 || x >= xmax || y == 0 || y >= ymax || z == 0 || z >= zmax {
+            if x <= 0 || x >= xmax || y <= 0 || y >= ymax || z <= 0 || z >= zmax {
                 is_open_space = true;
                 continue;
             }
             let offset = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)];
             for (dx, dy, dz) in offset {
                 if !(visited.contains(&(x + dx, y + dy, z + dz)) ||
-                    mcubes.contains_key(&(x + dx, y + dy, z + dz))) {
-                        inspect_cubes.push_back((x + dx, y + dy, z + dz));
-                    }
+                     mcubes.contains_key(&(x + dx, y + dy, z + dz)) ||
+                     inspect_cubes_set.contains(&(x + dx, y + dy, z + dz))
+                ) {
+                    inspect_cubes.push_back((x + dx, y + dy, z + dz));
+                    inspect_cubes_set.insert((x + dx, y + dy, z + dz));
+                }
             }
         }
 
