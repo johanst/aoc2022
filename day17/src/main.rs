@@ -15,7 +15,7 @@ fn part1() {
 fn part2() {
 }
 
-fn print_chamber(cha : &Vec<Vec<u8>>) {
+fn print_chamber(cha : &VecDeque<Vec<u8>>) {
     for row in cha.iter().rev() {
         for c in row.iter() {
             print!("{}", char::from_u32(*c as u32).unwrap());
@@ -27,7 +27,7 @@ fn print_chamber(cha : &Vec<Vec<u8>>) {
     stdin().read_line(&mut dummy);
 }
 
-fn print_chamber_last_15(cha : &Vec<Vec<u8>>) {
+fn print_chamber_last_15(cha : &VecDeque<Vec<u8>>) {
     for row in cha.iter().rev().take(15) {
         for c in row.iter() {
             print!("{}", char::from_u32(*c as u32).unwrap());
@@ -39,20 +39,20 @@ fn print_chamber_last_15(cha : &Vec<Vec<u8>>) {
     stdin().read_line(&mut dummy);
 }
 
-fn print_chamber_with_shape(cha : &Vec<Vec<u8>>,
+fn print_chamber_with_shape(cha : &VecDeque<Vec<u8>>,
                             s : &Vec<&str>,
-                            xpos : i32,
-                            ypos : i32) {
+                            xpos : i64,
+                            ypos : i64) {
     //dbg!(s);
     let mut y = cha.len();
     for row in cha.iter().rev() {
         y -= 1;
         for (x, c) in row.iter().enumerate() {
-            let y = y as i32;
-            let x = x as i32;
+            let y = y as i64;
+            let x = x as i64;
             //dbg!(y, x);
-            let cmod = if y >= ypos && y < ypos + s.len() as i32 &&
-                x >= xpos && x < xpos + s[0].len() as i32 &&
+            let cmod = if y >= ypos && y < ypos + s.len() as i64 &&
+                x >= xpos && x < xpos + s[0].len() as i64 &&
                 s[(y - ypos) as usize].as_bytes()[(x - xpos) as usize] == b'#'  {
                 '@'
             } else {
@@ -67,12 +67,12 @@ fn print_chamber_with_shape(cha : &Vec<Vec<u8>>,
     stdin().read_line(&mut dummy);
 }
 
-fn add_row_to_chamber(cha : &mut Vec<Vec<u8>>) {
+fn add_row_to_chamber(cha : &mut VecDeque<Vec<u8>>) {
     let vc = "|.......|".as_bytes().to_vec();
-    cha.push(vc);
+    cha.push_back(vc);
 }
 
-fn get_no_of_empty_rows(cha : &Vec<Vec<u8>>) -> i32 {
+fn get_no_of_empty_rows(cha : &VecDeque<Vec<u8>>) -> i64 {
     let vc = "|.......|".as_bytes().to_vec();
     let mut count = 0;
     for row in cha.iter().rev() {
@@ -85,10 +85,10 @@ fn get_no_of_empty_rows(cha : &Vec<Vec<u8>>) -> i32 {
     count
 }
 
-fn can_move_to_pos(cha : &Vec<Vec<u8>>,
+fn can_move_to_pos(cha : &VecDeque<Vec<u8>>,
                    s : &Vec<&str>,
-                   xpos : i32,
-                   ypos : i32) -> bool
+                   xpos : i64,
+                   ypos : i64) -> bool
 {
     for (dy, srow) in s.iter().enumerate() {
         for (dx, sc) in srow.chars().enumerate() {
@@ -101,10 +101,10 @@ fn can_move_to_pos(cha : &Vec<Vec<u8>>,
     return true;
 }
 
-fn move_to_pos(cha : &mut Vec<Vec<u8>>,
+fn move_to_pos(cha : &mut VecDeque<Vec<u8>>,
                s : &Vec<&str>,
-               xpos : i32,
-               ypos : i32)
+               xpos : i64,
+               ypos : i64)
 {
     for (dy, srow) in s.iter().enumerate() {
         for (dx, sc) in srow.chars().enumerate() {
@@ -115,8 +115,8 @@ fn move_to_pos(cha : &mut Vec<Vec<u8>>,
     }
 }
 
-fn tower_height(cha : &Vec<Vec<u8>>) -> i32 {
-    cha.len() as i32 - 1 - get_no_of_empty_rows(cha)
+fn tower_height(cha : &VecDeque<Vec<u8>>) -> i64 {
+    cha.len() as i64 - 1 - get_no_of_empty_rows(cha)
 }
 
 fn main() {
@@ -142,21 +142,22 @@ fn main() {
     assert_eq!(v.len(), 1);
     let v = v;
     dbg!(v[0].len());
-    dbg!(v[0]);
+    //dbg!(v[0]);
 
-    let mut chamber : Vec<Vec<u8>> = Vec::new();
+    let mut chamber : VecDeque<Vec<u8>> = VecDeque::new();
     let vc = "+-------+".as_bytes().to_vec();
-    chamber.push(vc);
+    chamber.push_back(vc);
 
     //let knas = get_no_of_empty_rows(&chamber);
     //dbg!(knas);
 
+    let mut rows_removed : u64 = 0;
     let mut rock_count : u64 = 0;
     let mut jet_count : u64 = 0;
     let mut shitr = shapes.iter().cycle();
     let mut jetitr = v[0].chars().cycle();
     // 13345
-    //for _ in 0..2022 {
+    // for _ in 0..2022 {
     //for _ in 0..(5 * 2 * v[0].len() + 1) {
     //for _ in 0..13345 {
     loop {
@@ -165,10 +166,10 @@ fn main() {
         // make sure we have three empty rows and enough row for our shape
         let num_empty = get_no_of_empty_rows(&chamber);
         //dbg!(num_empty);
-        let addc = 3 - get_no_of_empty_rows(&chamber) + shape.len() as i32;
+        let addc = 3 - get_no_of_empty_rows(&chamber) + shape.len() as i64;
         if addc < 0 {
             for _ in 0..-addc {
-                chamber.pop();
+                chamber.pop_back();
             }
         } else {
             for _ in 0..addc {
@@ -176,7 +177,15 @@ fn main() {
             }
         }
         let mut xpos = 3;
-        let mut ypos = chamber.len() as i32 - shape.len() as i32;
+
+        let bottom = chamber.pop_front().unwrap();
+        while chamber.len() > 128 {
+            chamber.pop_front();
+            rows_removed += 1
+        }
+        chamber.push_front(bottom);
+
+        let mut ypos = chamber.len() as i64 - shape.len() as i64;
 
         //print_chamber_with_shape(&chamber, &shape, xpos, ypos);
         loop {
@@ -211,12 +220,20 @@ fn main() {
             break;
         }
 
+        if rock_count == 1_000_000_000_000 {
+            break;
+        }
+
+        if rock_count % 1_000_000 == 0 {
+            println!("{rock_count} {jet_count}");
+        }
+
         //let jet = jetitr.next().unwrap();
     }
 
     print_chamber_last_15(&chamber);
     println!("Rock count: {}", rock_count);
-    println!("Tower height: {}", tower_height(&chamber));
+    println!("Tower height: {}", tower_height(&chamber) + rows_removed as i64);
 
     // 79089 height for 5 * 10091 (jet length * shape )
     let ncyc : u64 = 1000000000000 / ( 5 * 10091 ); // 19819641
