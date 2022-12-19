@@ -17,9 +17,13 @@ use std::iter;
 struct Step {
     totpot : u32,  // upper limit of possible max released pressure
     current : u32, // actual total released pressure
-    step : u32,    // Step nbr, 30=final step
+    step : u32,    // Step nbr, 30=final step (26 with elephant)
     pos : usize,   // node position (idx in idx2vid and map)
-    valves : u64   // valve bitmask (bit0=valve idx0 released, bit1=valve idx1 released, etc...)
+    valves : u64,  // valve bitmask (bit0=valve idx0 released, bit1=valve idx1 released, etc...)
+    mvalves : u64, // my valves
+    evalves : u64, // elephant valves
+    estep : u32,   // Elephant step nbr
+    epos : usize,  // Elephant position
 }
 
 // for finding shortest path between valve positions
@@ -164,12 +168,6 @@ impl State {
                     // valve already on
                     continue;
                 }
-                // dbg
-                if self.sp.get(&(step.pos, *path)).is_none() {
-                    dbg!(&step, *path);
-                    dbg!(self.idx2vid(step.pos), self.idx2vid(*path));
-                }
-                // end dbg
                 let sd : u32 = self.sp.get(&(step.pos, *path)).cloned().unwrap();
                 if step.step + sd + 1 >= 30 {
                     // too far, won't buy us anything
@@ -216,6 +214,130 @@ impl State {
             }
         }
     }
+
+    fn find_max_with_elephant(&self) {
+        let mut heap = BinaryHeap::new();
+        heap.push(Step {
+            pos: self.vid2idx("AA"),
+            epos: self.vid2idx("AA"),
+            ..Default::default()
+        });
+
+        //let max_theoretical
+        while let Some(step) = heap.pop() {
+            //dbg!(&step);
+            //let mut dummy : String = "".to_string();
+            //stdin().read_line(&mut dummy);
+
+            if step.step == 26 && step.estep == 26 {
+                println!("Reached step 30, released pressure: {}", step.current);
+                return;
+            }
+
+            let mut mpath_chosen = false;
+            let mut epath_chosen = false;
+            for path in self.idx_with_valves.iter().filter(
+                |p| **p != step.pos && **p != step.epos) {
+                if (1 << *path) & step.valves != 0 {
+                    // valve already on (should not happen in this algo though)
+                    continue;
+                }
+
+                // I move
+                let sd : u32 = self.sp.get(&(step.pos, *path)).cloned().unwrap();
+                if step.step + sd + 1 < 26 {
+                    mpath_chosen = true;
+                    // cost of moving and turning on valve = sd + 1
+                    let mut step_next = step.clone();
+                    step_next.pos = *path;
+                    step_next.step += sd + 1;
+                    step_next.current += self.get_current_released_pressure(
+                        step.mvalves) * (sd + 1);
+                    step_next.valves |= 1 << *path;
+                    step_next.mvalves |= 1 << *path;
+                    step_next.totpot = (26 - step_next.step) *
+                        self.rates_total +
+                        step_next.current;
+
+                    //println!("-----");
+                    //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
+                    //         step.step,
+                    //         self.idx2vid(step.pos),
+                    //         self.idx2vid(step_next.pos),
+                    //         sd + 1,
+                    //         self.get_current_released_pressure(
+                    //             step.valves) * (sd + 1)
+                    //);
+                    //dbg!(&step);
+                    //dbg!(&step_next);
+                    //let mut dummy : String = "".to_string();
+                    //stdin().read_line(&mut dummy);
+
+                    heap.push(step_next);
+                }
+
+                // Elephant moves
+                let sd : u32 = self.sp.get(&(step.epos, *path)).cloned().unwrap();
+                if step.estep + sd + 1 < 26 {
+                    epath_chosen = true;
+                    // cost of moving and turning on valve = sd + 1
+                    let mut step_next = step.clone();
+                    step_next.epos = *path;
+                    step_next.estep += sd + 1;
+                    step_next.current += self.get_current_released_pressure(
+                        step.evalves) * (sd + 1);
+                    step_next.valves |= 1 << *path;
+                    step_next.evalves |= 1 << *path;
+                    step_next.totpot =
+                        (26 - step_next.estep) *
+                        self.rates_total +
+                        step_next.current;
+
+                    //println!("-----");
+                    //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
+                    //         step.estep,
+                    //         self.idx2vid(step.epos),
+                    //         self.idx2vid(step_next.epos),
+                    //         sd + 1,
+                    //         self.get_current_released_pressure(
+                    //             step.valves) * (sd + 1)
+                    //);
+                    //dbg!(&step);
+                    //dbg!(&step_next);
+                    //let mut dummy : String = "".to_string();
+                    //stdin().read_line(&mut dummy);
+
+                    heap.push(step_next);
+                }
+            }
+
+            // if I couldn't turn on any new valve, let's just stay here
+            if !mpath_chosen {
+                let mut step_next = step.clone();
+                step_next.step = 26;
+                step_next.current += self.get_current_released_pressure(
+                    step.mvalves) * (26 - step.step);
+                step_next.totpot = step_next.current +
+                    self.get_current_released_pressure(step.evalves) *
+                    (26 - step.estep);
+
+                heap.push(step_next);
+            }
+
+            // if elephant couldn't turn on any new valve, let's just stay here
+            if !epath_chosen {
+                let mut step_next = step.clone();
+                step_next.estep = 26;
+                step_next.current += self.get_current_released_pressure(
+                    step.evalves) * (26 - step.estep);
+                step_next.totpot = step_next.current +
+                    self.get_current_released_pressure(step.mvalves) *
+                    (26 - step.step);
+
+                heap.push(step_next);
+            }
+        }
+    }
 }
 
 fn part1() {
@@ -225,7 +347,7 @@ fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("input.txt").unwrap();
+    let lines = std::fs::read_to_string("ex.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -235,7 +357,8 @@ fn main() {
 
     let st = State::new(&v);
     //dbg!(&st);
-    st.find_max();
+    //st.find_max();
+    st.find_max_with_elephant();
     //let sp = st.shortest_path(st.vid2idx("AA"),st.vid2idx("EE"));
 
     //let p = st.get_current_released_pressure(0b11_0000_1100);
