@@ -83,7 +83,8 @@ impl State {
         st.idx_with_valves = st.map.iter().enumerate()
             .filter_map(|(n, nd)| if nd.rate != 0 { Some(n) } else { None })
             .collect::<Vec<usize>>();
-        for a in st.idx_with_valves.iter().cloned().chain(iter::once(0)) {
+        let start_pos = st.vid2idx("AA");
+        for a in st.idx_with_valves.iter().cloned().chain(iter::once(start_pos)) {
             for b in st.idx_with_valves.iter().cloned() {
                 if a != b {
                     st.sp.insert((a, b), st.shortest_path(a, b));
@@ -163,8 +164,14 @@ impl State {
                     // valve already on
                     continue;
                 }
+                // dbg
+                if self.sp.get(&(step.pos, *path)).is_none() {
+                    dbg!(&step, *path);
+                    dbg!(self.idx2vid(step.pos), self.idx2vid(*path));
+                }
+                // end dbg
                 let sd : u32 = self.sp.get(&(step.pos, *path)).cloned().unwrap();
-                if sd + 1 >= 30 {
+                if step.step + sd + 1 >= 30 {
                     // too far, won't buy us anything
                     continue;
                 }
@@ -218,7 +225,7 @@ fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
