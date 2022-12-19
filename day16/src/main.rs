@@ -118,6 +118,17 @@ impl State {
         p
     }
 
+    fn get_current_unreleased_pressure(&self, mut valves : u64) -> u32 {
+        let mut p = 0;
+        for node in self.map.iter() {
+            if valves & 1 == 0 {
+                p += node.rate;
+            }
+            valves >>= 1;
+        }
+        p
+    }
+
     fn shortest_path(&self, a : usize, b : usize) -> u32 {
         let mut vis : HashMap<usize, u32> = HashMap::new();
         vis.insert(a, 0);
@@ -255,8 +266,15 @@ impl State {
                         step.mvalves) * (sd + 1);
                     step_next.valves |= 1 << *path;
                     step_next.mvalves |= 1 << *path;
-                    step_next.totpot = (26 - step_next.step) *
-                        self.rates_total +
+
+                    let stepmin = cmp::min(step_next.step, step_next.estep);
+                    let pme = self.get_current_released_pressure(step.mvalves);
+                    let pel = self.get_current_released_pressure(step.evalves);
+                    let psome = self.get_current_unreleased_pressure(step.valves);
+                    step_next.totpot =
+                        (26 - step_next.step) * pme +
+                        (26 - step_next.estep) * pel +
+                        (26 - stepmin) * psome +
                         step_next.current;
 
                     //println!("-----");
@@ -288,9 +306,15 @@ impl State {
                         step.evalves) * (sd + 1);
                     step_next.valves |= 1 << *path;
                     step_next.evalves |= 1 << *path;
+
+                    let stepmin = cmp::min(step_next.step, step_next.estep);
+                    let pme = self.get_current_released_pressure(step.mvalves);
+                    let pel = self.get_current_released_pressure(step.evalves);
+                    let psome = self.get_current_unreleased_pressure(step.valves);
                     step_next.totpot =
-                        (26 - step_next.estep) *
-                        self.rates_total +
+                        (26 - step_next.step) * pme +
+                        (26 - step_next.estep) * pel +
+                        (26 - stepmin) * psome +
                         step_next.current;
 
                     //println!("-----");
