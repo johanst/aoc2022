@@ -115,9 +115,9 @@ impl State {
 
     fn shortest_path(&self, a : usize, b : usize) -> u32 {
         let mut vis : HashMap<usize, u32> = HashMap::new();
-        vis.insert(0, 0);
+        vis.insert(a, 0);
         let mut heap = BinaryHeap::new();
-        heap.push(Reverse(Pos{step:0,pos:0}));
+        heap.push(Reverse(Pos{step:0,pos:a}));
         while let Some(Reverse(pos)) = heap.pop() {
             //dbg!(&pos);
             //let mut dummy : String = "".to_string();
@@ -179,11 +179,19 @@ impl State {
                 step_next.valves |= 1 << *path;
                 step_next.totpot = (30 - step_next.step) * self.rates_total + step_next.current;
 
-                println!("-----");
-                dbg!(&step);
-                dbg!(&step_next);
-                let mut dummy : String = "".to_string();
-                stdin().read_line(&mut dummy);
+                //println!("-----");
+                //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
+                //         step.step,
+                //         self.idx2vid(step.pos),
+                //         self.idx2vid(step_next.pos),
+                //         sd + 1,
+                //         self.get_current_released_pressure(
+                //             step.valves) * (sd + 1)
+                //);
+                //dbg!(&step);
+                //dbg!(&step_next);
+                //let mut dummy : String = "".to_string();
+                //stdin().read_line(&mut dummy);
 
                 heap.push(step_next);
 
@@ -219,10 +227,10 @@ fn main() {
     let v = v;
 
     let st = State::new(&v);
+    //dbg!(&st);
     st.find_max();
     //let sp = st.shortest_path(st.vid2idx("AA"),st.vid2idx("EE"));
 
-    //dbg!(&st);
     //let p = st.get_current_released_pressure(0b11_0000_1100);
     //dbg!(p);
 
