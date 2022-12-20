@@ -11,39 +11,16 @@ use std::io::stdin;
 
 #[derive(Debug)]
 struct Num {
-    n : i32,
+    n : i64,
     next : usize,
     prev : usize,
 }
 
-fn modulo(x : i32, n : usize) -> usize {
-   (((x % n as i32) + n as i32) % n as i32) as usize
+fn modulo(x : i64, n : usize) -> usize {
+   (((x % n as i64) + n as i64) % n as i64) as usize
 }
 
 fn part1() {
-}
-
-fn part2() {
-}
-
-fn get_nth(n : usize, idx_0: usize, file: &Vec<Num>) -> i32{
-    let mut idx_cur = idx_0;
-    for _ in 0..(n % file.len()) {
-        idx_cur = file[idx_cur].next;
-    }
-    file[idx_cur].n
-}
-
-fn print_seq(idx_0: usize, file: &Vec<Num>) {
-    let mut idx = idx_0;
-    for _ in 0..file.len() {
-        print!("{} ", file[idx].n);
-        idx = file[idx].next;
-    }
-    println!();
-}
-
-fn main() {
     let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
@@ -54,7 +31,7 @@ fn main() {
 
     let mut file : Vec<Num> = Vec::new();
     let mut idx_0 = 0;
-    for (i, n) in v.iter().map(|s| s.parse::<i32>().unwrap()).enumerate() {
+    for (i, n) in v.iter().map(|s| s.parse::<i64>().unwrap()).enumerate() {
         if n == 0 {
             idx_0 = i;
         }
@@ -69,6 +46,26 @@ fn main() {
 
     //print_seq(idx_0, &file);
 
+    mix(&mut file);
+
+    //let mut idx = idx_0;
+    //for _ in 0..flen {
+    //    print!("{} ", file[idx].n);
+    //    idx = file[idx].next;
+    //}
+    //println!();
+
+    let n_1000 = get_nth(1000, idx_0, &file);
+    let n_2000 = get_nth(2000, idx_0, &file);
+    let n_3000 = get_nth(3000, idx_0, &file);
+
+    dbg!(n_1000, n_2000, n_3000);
+    println!("Sum of coords: {}", n_1000 + n_2000 + n_3000);
+    // 6664 too low
+}
+
+fn mix(file : &mut Vec<Num>) {
+    let flen = file.len();
     for idx in 0..flen {
         if file[idx].n.abs() as usize % (flen - 1) == 0 {
             continue;
@@ -115,6 +112,38 @@ fn main() {
         //dbg!(&file);
         //println!();
     }
+}
+
+fn part2() {
+    let lines = std::fs::read_to_string("input.txt").unwrap();
+    let mut v = lines.split("\n").collect::<Vec<&str>>();
+    assert!(!v.is_empty());
+    if v[v.len() - 1] == "" {
+        v.pop();
+    }
+    let v = v;
+
+    let mut file : Vec<Num> = Vec::new();
+    let mut idx_0 = 0;
+    for (i, n) in v.iter().map(|s| s.parse::<i64>().unwrap()).enumerate() {
+        if n == 0 {
+            idx_0 = i;
+        }
+        let prev = if i == 0 { 0 } else { i - 1 };
+        let next = i + 1;
+        file.push(Num {n: n * 811589153, next, prev});
+    }
+
+    let flen = file.len();
+    file[0].prev = flen - 1;
+    file[flen - 1].next = 0;
+
+    for _ in 0..10 {
+        mix(&mut file);
+    }
+
+    //print_seq(idx_0, &file);
+
 
     //let mut idx = idx_0;
     //for _ in 0..flen {
@@ -130,8 +159,28 @@ fn main() {
     dbg!(n_1000, n_2000, n_3000);
     println!("Sum of coords: {}", n_1000 + n_2000 + n_3000);
     // 6664 too low
+}
 
-    part1();
+fn get_nth(n : usize, idx_0: usize, file: &Vec<Num>) -> i64{
+    let mut idx_cur = idx_0;
+    for _ in 0..(n % file.len()) {
+        idx_cur = file[idx_cur].next;
+    }
+    file[idx_cur].n
+}
+
+fn print_seq(idx_0: usize, file: &Vec<Num>) {
+    let mut idx = idx_0;
+    for _ in 0..file.len() {
+        print!("{} ", file[idx].n);
+        idx = file[idx].next;
+    }
+    println!();
+}
+
+fn main() {
+
+    //part1();
     part2();
 }
 
