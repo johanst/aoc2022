@@ -70,38 +70,40 @@ fn main() {
     //print_seq(idx_0, &file);
 
     for idx in 0..flen {
-        if file[idx].n == 0 {
+        if file[idx].n.abs() as usize % (flen - 1) == 0 {
             continue;
         }
 
         let old_next_idx = file[idx].next;
         let old_prev_idx = file[idx].prev;
-        let new_prev_idx = if file[idx].n >= 0 {
+        // unlink from old
+        file[old_prev_idx].next = old_next_idx;
+        file[old_next_idx].prev = old_prev_idx;
+
+        let new_prev_idx = if file[idx].n > 0 {
             // right
             let mut idx_cur = idx;
-            for _ in 0..(file[idx].n as usize % flen) {
+            for _ in 0..(file[idx].n as usize % (flen - 1)) {
                 idx_cur = file[idx_cur].next;
             }
             idx_cur
         } else {
             // left
-            let mut idx_cur = idx;
+            let mut idx_cur = file[idx].prev;
             //dbg!(-file[idx].n);
-            for _ in 0..((-file[idx].n + 1) as usize % flen) {
+            for _ in 0..(file[idx].n.abs()) as usize % (flen - 1) {
                 idx_cur = file[idx_cur].prev;
                 //dbg!(idx_cur);
             }
             idx_cur
         };
+        assert!(new_prev_idx != idx);
         if new_prev_idx == idx {
             continue;
         }
         //dbg!(new_prev_idx);
         let new_next_idx = file[new_prev_idx].next;
 
-        // unlink from old
-        file[old_prev_idx].next = old_next_idx;
-        file[old_next_idx].prev = old_prev_idx;
         // link to new
         file[idx].next = new_next_idx;
         file[idx].prev = new_prev_idx;
