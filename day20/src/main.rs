@@ -9,6 +9,13 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
+#[derive(Debug)]
+struct Num {
+    n : i32,
+    next : usize,
+    prev : usize,
+}
+
 fn part1() {
 }
 
@@ -24,7 +31,18 @@ fn main() {
     }
     let v = v;
 
-    dbg!(v);
+    let mut file : Vec<Num> = Vec::new();
+    for (i, n) in v.iter().map(|s| s.parse::<i32>().unwrap()).enumerate() {
+        let prev = if i == 0 { 0 } else { i - 1 };
+        let next = i + 1;
+        file.push(Num {n, next, prev});
+    }
+    file[0].prev = file.len() - 1;
+
+    for idx in 0..file.len() {
+        if file[idx].n > 0
+
+    dbg!(file);
 
     part1();
     part2();
