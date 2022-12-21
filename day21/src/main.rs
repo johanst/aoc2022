@@ -9,6 +9,12 @@ use std::cmp;
 use std::fmt;
 use std::io::stdin;
 
+enum Operand<'a> {
+    Ref(<&'a str>)
+
+struct Operation {
+    Add()
+
 fn part1() {
 }
 
