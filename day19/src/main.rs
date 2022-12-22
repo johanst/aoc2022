@@ -19,6 +19,18 @@ struct Config {
     geo_rc_obs : u32,
 }
 
+#[derive(Debug, PartialOrd, Ord, Default, Clone)]
+struct State {
+    step : u32,
+    ore : u32,
+    clay : u32,
+    obs : u32,
+    geo : u32,
+    ore_robots : u32,
+    clay_robots : u32,
+    obs_robots : u32,
+    geo_robots : u32,
+
 fn get_numeric(s: &str, idx : usize) -> u32 {
     let mut w = s.split_whitespace();
     if idx == 0 {
