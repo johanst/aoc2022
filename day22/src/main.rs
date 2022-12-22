@@ -17,13 +17,13 @@ enum Place {
     Wall
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Move {
     Walk(i32),
     Turn(i32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Actor {
     xpos : i32,
     ypos : i32,
@@ -64,7 +64,63 @@ fn draw_map(cfg : &Config, actor : &Actor) {
     }
 }
 
-fn part1() {
+fn walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
+    let mut anew = *actor;
+    match mv {
+        Move::Turn(dir) => {
+            let dirs : [(i32, i32); 4] = [
+                (1, 0), (0, 1), (-1, 0), (0, -1)];
+            let dpos = dirs.iter()
+                .position(|&x| x == (actor.xdir, actor.ydir)).unwrap();
+            let dpos_new = (dpos as i32 + 4 + dir) as usize % 4;
+            anew.xdir = dirs[dpos_new].0;
+            anew.ydir = dirs[dpos_new].1;
+        }
+        Move::Walk(mut steps) => {
+            while steps != 0 {
+                let mut xpnew = anew.xpos + actor.xdir;
+                let mut ypnew = anew.ypos + actor.ydir;
+                let ypos = actor.ypos as usize;
+                let xpos = actor.xpos as usize;
+                // Bounds check
+                if actor.ydir == 0 {
+                    if xpnew < cfg.mxrng[ypos].0 as i32{
+                        xpnew = cfg.mxrng[ypos].1 as i32;
+                    } else if xpnew > cfg.mxrng[ypos].1 as i32 {
+                        xpnew = cfg.mxrng[ypos].0 as i32;
+                    }
+                } else if actor.xdir == 0 as i32 {
+                    if ypnew < cfg.myrng[xpos].0 as i32 {
+                        ypnew = cfg.myrng[xpos].1 as i32;
+                    } else if ypnew > cfg.myrng[ypos].1 as i32 {
+                        ypnew = cfg.myrng[xpos].0 as i32;
+                    }
+                } else {
+                    unreachable!();
+                }
+                // check if wall
+                match cfg.m[ypnew as usize][xpnew as usize] {
+                    Place::Outside => unreachable!(),
+                    Place::Wall => break,
+                    Place::Path => steps -= 1,
+                };
+
+                anew.xpos = xpnew;
+                anew.ypos = ypnew;
+            }
+        }
+    }
+
+    anew
+}
+
+fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
+    let mut a = *actor;
+    for mv in p {
+        a = walk(*mv, cfg, &a);
+        draw_map(cfg, &a);
+        println!();
+    }
 }
 
 fn part2() {
@@ -165,7 +221,7 @@ fn main() {
     //dbg!(cfg.myrng);
     //dbg!(v);
 
-    part1();
+    part1(&p, &cfg, &actor);
     part2();
 }
 
