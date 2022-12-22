@@ -172,7 +172,7 @@ fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                     yposnew = l;
                     (xdirnew, ydirnew) = face2dir(Face::Down);
                 }
-                else if x == l * 2 && f == Face::Left {
+                else if x == l * 2 && y < l && f == Face::Left {
                     // Side 1 left
                     xposnew = l + y;
                     yposnew = l;
@@ -272,6 +272,137 @@ fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
     anew
 }
 
+fn cube_walk_50(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
+    let mut anew = *actor;
+    match mv {
+        Move::Turn(dir) => {
+            let dirs : [(i32, i32); 4] = [
+                (1, 0), (0, 1), (-1, 0), (0, -1)];
+            let dpos = dirs.iter()
+                .position(|&x| x == (actor.xdir, actor.ydir)).unwrap();
+            let dpos_new = (dpos as i32 + 4 + dir) as usize % 4;
+            anew.xdir = dirs[dpos_new].0;
+            anew.ydir = dirs[dpos_new].1;
+        }
+        Move::Walk(mut steps) => {
+            while steps != 0 {
+                let mut yposnew = anew.ypos;
+                let mut xposnew = anew.xpos;
+                let mut ydirnew = anew.ydir;
+                let mut xdirnew = anew.xdir;
+
+                let y = anew.ypos;
+                let x = anew.xpos;
+                let f = dir2face((anew.xdir, anew.ydir));
+                let l = cfg.cube_size as i32;
+
+
+                if y == 0 && x < 2 * l && f == Face::Up {
+                    // Side 1 up
+                    xposnew = 0;
+                    yposnew = 3 * l + x;
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if x == l && y < l && f == Face::Left {
+                    // Side 1 left
+                    xposnew = 0;
+                    yposnew = 3 * l - 1 - y;
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if y == 0 && f == Face::Up {
+                    // Side 2 up
+                    xposnew = x - 2 * l;
+                    yposnew = 4 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                }
+                else if x == 3 * l - 1 && f == Face::Right {
+                    // Side 2 right
+                    xposnew = 2 * l - 1;
+                    yposnew = 2 * l + (l - 1 - y);
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
+                }
+                else if y == l - 1 && x >= 2 * l && f == Face::Down {
+                    // Side 2 down
+                    xposnew = 2 * l - 1;
+                    yposnew = (x - 100) + (y - 50);
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
+                }
+                else if x == l && y < 2 * l && f == Face::Left {
+                    // Side 3 left
+                    xposnew = y - 50;
+                    yposnew = 2 * l;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
+                }
+                else if x == 2 * l - 1 && y < 2 * l && f == Face::Right {
+                    // Side 3 right
+                    xposnew = 2 * l + (y - l);
+                    yposnew = 3 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                }
+                else if x < l && y == 2 * l && f == Face::Up {
+                    // Side 4 up
+                    xposnew = l;
+                    yposnew = 50 + x;
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if x == 0 && y < 3 * l && f == Face::Left {
+                    // Side 4 left
+                    xposnew = l;
+                    yposnew = l - 1 - (y - 2 * l);
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if x == 2 * l - 1 && y < 3 * l && f == Face::Right {
+                    // Side 5 Right
+                    xposnew = 3 * l - 1;
+                    yposnew = 3 * l - 1 - y;
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
+                }
+                else if x >= l && y == 3 * l - 1 && f == Face::Down {
+                    // Side 5 down
+                    xposnew = l - 1;
+                    yposnew = x - l + 3 * l;
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
+                }
+                else if x == 0 && y >= 3 * l && f == Face::Left {
+                    // Side 6 left
+                    xposnew = x + 50;
+                    yposnew = 0;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
+                }
+                else if y == 4 * l - 1 && f == Face::Down {
+                    // Side 6 down
+                    xposnew = 2 * l + x;
+                    yposnew = 0;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
+                }
+                else if x == l - 1 && y >= 3 * l && f == Face::Right {
+                    // Side 6 right
+                    xposnew = y - 3 * l + l;
+                    yposnew = 3 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                } else {
+                    xposnew += anew.xdir;
+                    yposnew += anew.ydir;
+                }
+
+                // check if wall
+                match cfg.m[yposnew as usize][xposnew as usize] {
+                    Place::Outside => unreachable!(),
+                    Place::Wall => break,
+                    Place::Path => steps -= 1,
+                };
+
+                anew.xpos = xposnew;
+                anew.ypos = yposnew;
+                anew.xdir = xdirnew;
+                anew.ydir = ydirnew;
+            }
+        }
+    }
+
+    anew
+}
+
 fn calc_password(a : Actor) -> i32 {
     let col = a.xpos + 1;
     let row = a.ypos + 1;
@@ -302,10 +433,26 @@ fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
 fn part2(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
     let mut a = *actor;
     for mv in p {
-        dbg!(mv);
+        //dbg!(mv);
+        //dbg!(&a, &mv);
         a = cube_walk(*mv, cfg, &a);
-        draw_map(cfg, &a);
-        println!();
+        //draw_map(cfg, &a);
+        //println!();
+    }
+
+    let password = calc_password(a);
+
+    println!("Password: {password}");
+}
+
+fn part2_50(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
+    let mut a = *actor;
+    for mv in p {
+        //dbg!(mv);
+        //dbg!(&a, &mv);
+        a = cube_walk_50(*mv, cfg, &a);
+        //draw_map(cfg, &a);
+        //println!();
     }
 
     let password = calc_password(a);
@@ -314,7 +461,7 @@ fn part2(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
 }
 
 fn main() {
-    let input = "ex.txt";
+    let input = "input.txt";
     //let input = "input.txt";
 
     let lines = std::fs::read_to_string(input).unwrap();
@@ -414,7 +561,13 @@ fn main() {
     //dbg!(v);
 
     //part1(&p, &cfg, &actor);
-    part2(&p, &cfg, &actor);
+    if cube_size == 4 {
+        part2(&p, &cfg, &actor);
+    } else if cube_size == 50 {
+        part2_50(&p, &cfg, &actor);
+    } else {
+        unreachable!();
+    }
 }
 
 #[cfg(test)]
