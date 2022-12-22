@@ -115,6 +115,103 @@ fn walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
     anew
 }
 
+#[derive(Debug, PartialEq)]
+enum Face {
+    Right,
+    Down,
+    Left,
+    Up,
+}
+
+fn dir2face(dir : (i32, i32)) -> Face {
+    match dir {
+        (1, 0) => Face::Right,
+        (0, 1) => Face::Down,
+        (-1, 0) => Face::Left,
+        (0, -1) => Face::Up,
+        _ => unreachable!()
+    }
+}
+
+fn face2dir(face : Face) -> (i32, i32) {
+    match face {
+        Face::Right => (1, 0),
+        Face::Down => (0, 1),
+        Face::Left => (-1, 0),
+        Face::Up => (0, -1),
+    }
+}
+
+fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
+    let mut anew = *actor;
+    match mv {
+        Move::Turn(dir) => {
+            let dirs : [(i32, i32); 4] = [
+                (1, 0), (0, 1), (-1, 0), (0, -1)];
+            let dpos = dirs.iter()
+                .position(|&x| x == (actor.xdir, actor.ydir)).unwrap();
+            let dpos_new = (dpos as i32 + 4 + dir) as usize % 4;
+            anew.xdir = dirs[dpos_new].0;
+            anew.ydir = dirs[dpos_new].1;
+        }
+        Move::Walk(mut steps) => {
+            while steps != 0 {
+                let y = actor.ypos;
+                let x = actor.xpos;
+                let f = dir2face((actor.xdir, actor.ydir));
+                let l = cfg.cube_size as i32;
+                if y == 0 && f == Face::Up {
+                    // Side 1 up
+                    anew.xpos = (l - 1) - (x - 2 * l);
+                    anew.ypos = l;
+                    (anew.xpos, anew.ypos) = face2dir(Face::Down);
+                }
+                else if x == l * 2 && f == Face::Left {
+                    // Side 1 left
+                    anew.xpos = l + (y - 2 * l);
+                    anew.ypos = l;
+                    (anew.xpos, anew.ypos) = face2dir(Face::Down);
+                }
+                else if x == 3 * l - 1 && y < l && f == Face::Right {
+                    anew.xpos = 4 * l - 1;
+                    anew.ypos = 2 * l + (l - 1 - y);
+                    (anew.xpos, anew.ypos) = face2dir(Face::Left);
+                }
+//
+//                let mut xpnew = anew.xpos + actor.xdir;
+//                let mut ypnew = anew.ypos + actor.ydir;
+//                // Bounds check
+//                if actor.ydir == 0 {
+//                    if xpnew < cfg.mxrng[ypos].0 as i32{
+//                        xpnew = cfg.mxrng[ypos].1 as i32;
+//                    } else if xpnew > cfg.mxrng[ypos].1 as i32 {
+//                        xpnew = cfg.mxrng[ypos].0 as i32;
+//                    }
+//                } else if actor.xdir == 0 as i32 {
+//                    if ypnew < cfg.myrng[xpos].0 as i32 {
+//                        ypnew = cfg.myrng[xpos].1 as i32;
+//                    } else if ypnew > cfg.myrng[xpos].1 as i32 {
+//                        ypnew = cfg.myrng[xpos].0 as i32;
+//                    }
+//                } else {
+//                    unreachable!();
+//                }
+//                // check if wall
+//                match cfg.m[ypnew as usize][xpnew as usize] {
+//                    Place::Outside => unreachable!(),
+//                    Place::Wall => break,
+//                    Place::Path => steps -= 1,
+//                };
+//
+//                anew.xpos = xpnew;
+//                anew.ypos = ypnew;
+            }
+        }
+    }
+
+    anew
+}
+
 fn calc_password(a : Actor) -> i32 {
     let col = a.xpos + 1;
     let row = a.ypos + 1;
