@@ -300,16 +300,16 @@ fn cube_walk_50(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                 if y == 0 && x < 2 * l && f == Face::Up {
                     // Side 1 up
                     xposnew = 0;
-                    yposnew = 3 * l + x;
+                    yposnew = 3 * l + x - l;
                     (xdirnew, ydirnew) = face2dir(Face::Right);
                 }
                 else if x == l && y < l && f == Face::Left {
                     // Side 1 left
                     xposnew = 0;
-                    yposnew = 3 * l - 1 - y;
+                    yposnew = 2 * l + (l - 1 - y);
                     (xdirnew, ydirnew) = face2dir(Face::Right);
                 }
-                else if y == 0 && f == Face::Up {
+                else if y == 0 && x >= 2 * l && f == Face::Up {
                     // Side 2 up
                     xposnew = x - 2 * l;
                     yposnew = 4 * l - 1;
@@ -324,34 +324,34 @@ fn cube_walk_50(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                 else if y == l - 1 && x >= 2 * l && f == Face::Down {
                     // Side 2 down
                     xposnew = 2 * l - 1;
-                    yposnew = (x - 100) + (y - 50);
+                    yposnew = l + (x - 2 * l);
                     (xdirnew, ydirnew) = face2dir(Face::Left);
                 }
-                else if x == l && y < 2 * l && f == Face::Left {
+                else if x == l && y >= l && y < 2 * l && f == Face::Left {
                     // Side 3 left
-                    xposnew = y - 50;
+                    xposnew = y - l;
                     yposnew = 2 * l;
                     (xdirnew, ydirnew) = face2dir(Face::Down);
                 }
-                else if x == 2 * l - 1 && y < 2 * l && f == Face::Right {
+                else if x == 2 * l - 1 && y >= l && y < 2 * l && f == Face::Right {
                     // Side 3 right
                     xposnew = 2 * l + (y - l);
-                    yposnew = 3 * l - 1;
+                    yposnew = l - 1;
                     (xdirnew, ydirnew) = face2dir(Face::Up);
                 }
                 else if x < l && y == 2 * l && f == Face::Up {
                     // Side 4 up
                     xposnew = l;
-                    yposnew = 50 + x;
+                    yposnew = l + x;
                     (xdirnew, ydirnew) = face2dir(Face::Right);
                 }
                 else if x == 0 && y < 3 * l && f == Face::Left {
                     // Side 4 left
                     xposnew = l;
-                    yposnew = l - 1 - (y - 2 * l);
+                    yposnew = 3 * l - 1 - y;
                     (xdirnew, ydirnew) = face2dir(Face::Right);
                 }
-                else if x == 2 * l - 1 && y < 3 * l && f == Face::Right {
+                else if x == 2 * l - 1 && y >= 2 * l && y < 3 * l && f == Face::Right {
                     // Side 5 Right
                     xposnew = 3 * l - 1;
                     yposnew = 3 * l - 1 - y;
@@ -365,7 +365,7 @@ fn cube_walk_50(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                 }
                 else if x == 0 && y >= 3 * l && f == Face::Left {
                     // Side 6 left
-                    xposnew = x + 50;
+                    xposnew = y - 3 * l + l;
                     yposnew = 0;
                     (xdirnew, ydirnew) = face2dir(Face::Down);
                 }
@@ -387,7 +387,11 @@ fn cube_walk_50(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
 
                 // check if wall
                 match cfg.m[yposnew as usize][xposnew as usize] {
-                    Place::Outside => unreachable!(),
+                    Place::Outside => {
+                        dbg!(anew);
+                        dbg!(xposnew, yposnew);
+                        unreachable!()
+                    },
                     Place::Wall => break,
                     Place::Path => steps -= 1,
                 };
@@ -413,7 +417,7 @@ fn calc_password(a : Actor) -> i32 {
         (0, -1) => 3,
         _ => unreachable!()
     };
-    //dbg!(col, row, dir);
+    dbg!(col, row, dir);
     1000 * row + 4 * col + dir
 }
 
@@ -446,6 +450,9 @@ fn part2(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
 }
 
 fn part2_50(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
+    // 26403 is too low
+    // 114151 is too low
+
     let mut a = *actor;
     for mv in p {
         //dbg!(mv);
