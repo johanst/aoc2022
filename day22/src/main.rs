@@ -17,6 +17,20 @@ enum Place {
     Wall
 }
 
+#[derive(Debug)]
+enum Move {
+    Walk(i32),
+    Turn(i32),
+}
+
+#[derive(Debug)]
+struct Actor {
+    xpos : i32,
+    ypos : i32,
+    xdir : i32,
+    ydir : i32,
+}
+
 fn part1() {
 }
 
@@ -74,6 +88,33 @@ fn main() {
         }
         myrng.push((ymin, ymax));
     }
+    // Get path
+    let mut p : Vec<Move> = Vec::new();
+    let mut c_last = '?';
+    let mut n = 0;
+    for c in v.last().unwrap().chars() {
+        match c {
+            'L' => {
+                p.push(Move::Walk(n));
+                p.push(Move::Turn(-1));
+                n = 0;
+            },
+            'R' => {
+                p.push(Move::Walk(n));
+                p.push(Move::Turn(1));
+                n = 0;
+            },
+            c => {
+                n *= 10;
+                n += c.to_digit(10).unwrap() as i32;
+            }
+        }
+    }
+    if n != 0 {
+        p.push(Move::Walk(n));
+    }
+
+    dbg!(&p);
 
     //dbg!(m);
     //dbg!(mxrng);
@@ -92,4 +133,3 @@ mod test {
     fn test_lit_plus_lit() {
     }
 }
-
