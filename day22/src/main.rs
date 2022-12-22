@@ -156,63 +156,115 @@ fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
         }
         Move::Walk(mut steps) => {
             while steps != 0 {
+                let mut yposnew = actor.ypos;
+                let mut xposnew = actor.xpos;
+                let mut ydirnew = actor.ydir;
+                let mut xdirnew = actor.xdir;
+
                 let y = actor.ypos;
                 let x = actor.xpos;
                 let f = dir2face((actor.xdir, actor.ydir));
                 let l = cfg.cube_size as i32;
+
                 if y == 0 && f == Face::Up {
                     // Side 1 up
-                    anew.xpos = (l - 1) - (x - 2 * l);
-                    anew.ypos = l;
-                    (anew.xpos, anew.ypos) = face2dir(Face::Down);
+                    xposnew = (l - 1) - (x - 2 * l);
+                    yposnew = l;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
                 }
                 else if x == l * 2 && f == Face::Left {
                     // Side 1 left
-                    anew.xpos = l + y;
-                    anew.ypos = l;
-                    (anew.xpos, anew.ypos) = face2dir(Face::Down);
+                    xposnew = l + y;
+                    yposnew = l;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
                 }
                 else if x == 3 * l - 1 && y < l && f == Face::Right {
                     // Side 1 right
-                    anew.xpos = 4 * l - 1;
-                    anew.ypos = 2 * l + (l - 1 - y);
-                    (anew.xpos, anew.ypos) = face2dir(Face::Left);
+                    xposnew = 4 * l - 1;
+                    yposnew = 2 * l + (l - 1 - y);
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
                 }
                 else if x == 3 * l - 1 && y < 2 * l && f == Face::Right {
                     // Side 4 right
-                    anew.xpos = 4 * l - 1 - (y - l);
-                    anew.ypos = 2 * l;
-                    (anew.xpos, anew.ypos) = face2dir(Face::Down);
+                    xposnew = 4 * l - 1 - (y - l);
+                    yposnew = 2 * l;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
+                }
+                else if x == 0 && f == Face::Left {
+                    // Side 2 left
+                    xposnew = 4 * l - 1 - (y - l);
+                    yposnew = 3 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                }
+                else if x < l && y == l && f == Face::Up {
+                    // Side 2 up
+                    xposnew = 3 * l - 1 - x;
+                    yposnew = 0;
+                    (xdirnew, ydirnew) = face2dir(Face::Down);
+                }
+                else if x < l && y == 2 * l - 1 && f == Face::Down {
+                    // Side 2 down
+                    xposnew = 3 * l - 1 - x;
+                    yposnew = 3 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                }
+                else if x < 2 * l && y == l && f == Face::Up {
+                    // Side 3 up
+                    xposnew = 2 * l;
+                    yposnew = x - l;
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if x < 2 * l && y == 2 * l - 1 && f == Face::Down {
+                    // Side 3 down
+                    xposnew = 2 * l;
+                    yposnew = 3 * l - 1 - (x - l);
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if x == 2 * l && y > 2 *l && f == Face::Left {
+                    // Side 5 left
+                    xposnew = 2 * l - 1 - (x - 2 * l);
+                    yposnew = 2 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                }
+                else if x < 3 * l && y == 3 * l - 1 && f == Face::Down {
+                    // Side 5 down
+                    xposnew = 3 * l - 1 - x;
+                    yposnew = 2 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Up);
+                }
+                else if y == 2 * l && f == Face::Up {
+                    // Side 6 up
+                    xposnew = 3 * l - 1;
+                    yposnew = 4 * l - 1 - x + l;
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
+                }
+                else if y == 3 * l - 1 && f == Face::Down {
+                    // Side 6 down
+                    xposnew = 0;
+                    yposnew = 4 * l - 1 - x + l;
+                    (xdirnew, ydirnew) = face2dir(Face::Right);
+                }
+                else if x == 4 * l - 1 && f == Face:: Right {
+                    // Side 6 right
+                    xposnew = 3 * l - 1;
+                    yposnew = 4 * l - 1;
+                    (xdirnew, ydirnew) = face2dir(Face::Left);
+                } else {
+                    xposnew += actor.xdir;
+                    yposnew += actor.ydir;
                 }
 
-//
-//                let mut xpnew = anew.xpos + actor.xdir;
-//                let mut ypnew = anew.ypos + actor.ydir;
-//                // Bounds check
-//                if actor.ydir == 0 {
-//                    if xpnew < cfg.mxrng[ypos].0 as i32{
-//                        xpnew = cfg.mxrng[ypos].1 as i32;
-//                    } else if xpnew > cfg.mxrng[ypos].1 as i32 {
-//                        xpnew = cfg.mxrng[ypos].0 as i32;
-//                    }
-//                } else if actor.xdir == 0 as i32 {
-//                    if ypnew < cfg.myrng[xpos].0 as i32 {
-//                        ypnew = cfg.myrng[xpos].1 as i32;
-//                    } else if ypnew > cfg.myrng[xpos].1 as i32 {
-//                        ypnew = cfg.myrng[xpos].0 as i32;
-//                    }
-//                } else {
-//                    unreachable!();
-//                }
-//                // check if wall
-//                match cfg.m[ypnew as usize][xpnew as usize] {
-//                    Place::Outside => unreachable!(),
-//                    Place::Wall => break,
-//                    Place::Path => steps -= 1,
-//                };
-//
-//                anew.xpos = xpnew;
-//                anew.ypos = ypnew;
+                // check if wall
+                match cfg.m[yposnew as usize][xposnew as usize] {
+                    Place::Outside => unreachable!(),
+                    Place::Wall => break,
+                    Place::Path => steps -= 1,
+                };
+
+                anew.xpos = xposnew;
+                anew.ypos = yposnew;
+                anew.xdir = xdirnew;
+                anew.ydir = ydirnew;
             }
         }
     }
