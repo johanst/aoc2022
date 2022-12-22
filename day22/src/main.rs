@@ -92,7 +92,7 @@ fn walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                 } else if actor.xdir == 0 as i32 {
                     if ypnew < cfg.myrng[xpos].0 as i32 {
                         ypnew = cfg.myrng[xpos].1 as i32;
-                    } else if ypnew > cfg.myrng[ypos].1 as i32 {
+                    } else if ypnew > cfg.myrng[xpos].1 as i32 {
                         ypnew = cfg.myrng[xpos].0 as i32;
                     }
                 } else {
@@ -118,16 +118,30 @@ fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
     let mut a = *actor;
     for mv in p {
         a = walk(*mv, cfg, &a);
-        draw_map(cfg, &a);
-        println!();
+        //draw_map(cfg, &a);
+        //println!();
     }
+
+    let col = a.xpos + 1;
+    let row = a.ypos + 1;
+    let dir = match (a.xdir, a.ydir) {
+        (1, 0) => 0,
+        (0, 1) => 1,
+        (-1, 0) => 2,
+        (0, -1) => 3,
+        _ => unreachable!()
+    };
+    //dbg!(col, row, dir);
+    let password = 1000 * row + 4 * col + dir;
+
+    println!("Password: {password}");
 }
 
 fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -212,7 +226,7 @@ fn main() {
         xdir : 1,
         ydir : 0,
     };
-    draw_map(&cfg, &actor);
+    //draw_map(&cfg, &actor);
 
     //dbg!(&p);
 
