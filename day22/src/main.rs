@@ -156,14 +156,14 @@ fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
         }
         Move::Walk(mut steps) => {
             while steps != 0 {
-                let mut yposnew = actor.ypos;
-                let mut xposnew = actor.xpos;
-                let mut ydirnew = actor.ydir;
-                let mut xdirnew = actor.xdir;
+                let mut yposnew = anew.ypos;
+                let mut xposnew = anew.xpos;
+                let mut ydirnew = anew.ydir;
+                let mut xdirnew = anew.xdir;
 
-                let y = actor.ypos;
-                let x = actor.xpos;
-                let f = dir2face((actor.xdir, actor.ydir));
+                let y = anew.ypos;
+                let x = anew.xpos;
+                let f = dir2face((anew.xdir, anew.ydir));
                 let l = cfg.cube_size as i32;
 
                 if y == 0 && f == Face::Up {
@@ -250,8 +250,8 @@ fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                     yposnew = 4 * l - 1;
                     (xdirnew, ydirnew) = face2dir(Face::Left);
                 } else {
-                    xposnew += actor.xdir;
-                    yposnew += actor.ydir;
+                    xposnew += anew.xdir;
+                    yposnew += anew.ydir;
                 }
 
                 // check if wall
@@ -299,7 +299,18 @@ fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
     println!("Password: {password}");
 }
 
-fn part2() {
+fn part2(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
+    let mut a = *actor;
+    for mv in p {
+        dbg!(mv);
+        a = cube_walk(*mv, cfg, &a);
+        draw_map(cfg, &a);
+        println!();
+    }
+
+    let password = calc_password(a);
+
+    println!("Password: {password}");
 }
 
 fn main() {
@@ -402,8 +413,8 @@ fn main() {
     //dbg!(cfg.myrng);
     //dbg!(v);
 
-    part1(&p, &cfg, &actor);
-    part2();
+    //part1(&p, &cfg, &actor);
+    part2(&p, &cfg, &actor);
 }
 
 #[cfg(test)]
