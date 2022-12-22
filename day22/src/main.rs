@@ -38,6 +38,7 @@ struct Config {
     mxrng : Vec<(usize,usize)>,
     xsize : usize,
     ysize : usize,
+    cube_size : usize,
 }
 
 fn draw_map(cfg : &Config, actor : &Actor) {
@@ -114,14 +115,7 @@ fn walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
     anew
 }
 
-fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
-    let mut a = *actor;
-    for mv in p {
-        a = walk(*mv, cfg, &a);
-        //draw_map(cfg, &a);
-        //println!();
-    }
-
+fn calc_password(a : Actor) -> i32 {
     let col = a.xpos + 1;
     let row = a.ypos + 1;
     let dir = match (a.xdir, a.ydir) {
@@ -132,7 +126,18 @@ fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
         _ => unreachable!()
     };
     //dbg!(col, row, dir);
-    let password = 1000 * row + 4 * col + dir;
+    1000 * row + 4 * col + dir
+}
+
+fn part1(p : &Vec<Move>, cfg : &Config, actor : &Actor) {
+    let mut a = *actor;
+    for mv in p {
+        a = walk(*mv, cfg, &a);
+        //draw_map(cfg, &a);
+        //println!();
+    }
+
+    let password = calc_password(a);
 
     println!("Password: {password}");
 }
@@ -141,7 +146,10 @@ fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("input.txt").unwrap();
+    let input = "ex.txt";
+    //let input = "input.txt";
+
+    let lines = std::fs::read_to_string(input).unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
@@ -152,6 +160,7 @@ fn main() {
 
     let xsize = v.iter().take(ysize).map(|r| r.len()).max().unwrap();
     //dbg!(ysize, xsize);
+    let cube_size = if input == "ex.txt" { 4 } else { 50 };
 
     let mut cfg = Config {
         m : Vec::new(),
@@ -159,6 +168,7 @@ fn main() {
         mxrng : Vec::new(), // given y, what is xmin,xmax
         xsize,
         ysize,
+        cube_size,
     };
     for (yidx, row) in v.iter().take(ysize).enumerate() {
         cfg.m.push(Vec::new());
