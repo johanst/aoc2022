@@ -168,15 +168,23 @@ fn cube_walk(mv : Move, cfg : &Config, actor : &Actor) -> Actor {
                 }
                 else if x == l * 2 && f == Face::Left {
                     // Side 1 left
-                    anew.xpos = l + (y - 2 * l);
+                    anew.xpos = l + y;
                     anew.ypos = l;
                     (anew.xpos, anew.ypos) = face2dir(Face::Down);
                 }
                 else if x == 3 * l - 1 && y < l && f == Face::Right {
+                    // Side 1 right
                     anew.xpos = 4 * l - 1;
                     anew.ypos = 2 * l + (l - 1 - y);
                     (anew.xpos, anew.ypos) = face2dir(Face::Left);
                 }
+                else if x == 3 * l - 1 && y < 2 * l && f == Face::Right {
+                    // Side 4 right
+                    anew.xpos = 4 * l - 1 - (y - l);
+                    anew.ypos = 2 * l;
+                    (anew.xpos, anew.ypos) = face2dir(Face::Down);
+                }
+
 //
 //                let mut xpnew = anew.xpos + actor.xdir;
 //                let mut ypnew = anew.ypos + actor.ydir;
