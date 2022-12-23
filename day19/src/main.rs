@@ -45,20 +45,70 @@ fn collect(st : &State, steps : u16) -> State {
 
 fn get_max_geodes(cfg : &Config, st : State) -> u16 {
     let mut max_geo = st.geo + st.geo_robots * (24 - st.step);
-    dbg!(&st, max_geo);
+    //dbg!(&st, max_geo);
+    //let mut dummy : String = "".to_string();
+    //stdin().read_line(&mut dummy);
 
     if st.obs_robots > 0 {
         // I can build more geo_robots if have the stuff and I have the
         // robot before step 24
+        let obs_needed = if cfg.geo_rc_obs > st.obs {
+            cfg.geo_rc_obs - st.obs } else { 0 };
+        let ore_needed = if cfg.geo_rc_ore > st.ore {
+            cfg.geo_rc_ore - st.ore } else { 0 };
         let steps_needed = cmp::max(
-            ( cfg.geo_rc_obs + st.obs_robots - 1 ) / st.obs_robots,
-            ( cfg.geo_rc_ore + st.ore_robots - 1 ) / st.ore_robots);
+            ( obs_needed + st.obs_robots - 1 ) / st.obs_robots,
+            ( ore_needed + st.ore_robots - 1 ) / st.ore_robots);
         if steps_needed + st.step + 1 < 24 {
             // steps_needed to collect + 1 for creating the robot
             let mut st_next = collect(&st, steps_needed + 1);
             st_next.ore -= cfg.geo_rc_ore;
             st_next.obs -= cfg.geo_rc_obs;
             st_next.geo_robots += 1;
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+        }
+    }
+
+    if st.clay_robots > 0 {
+        // build an obsidian robot
+        let clay_needed = if cfg.obs_rc_clay > st.clay {
+            cfg.obs_rc_clay - st.clay } else { 0 };
+        let ore_needed = if cfg.obs_rc_ore > st.ore {
+            cfg.obs_rc_ore - st.ore } else { 0 };
+        let steps_needed = cmp::max(
+            ( ore_needed + st.ore_robots - 1 ) / st.ore_robots,
+            ( clay_needed + st.clay_robots - 1 ) / st.clay_robots);
+        if steps_needed + st.step + 1 < 24 {
+            let mut st_next = collect(&st, steps_needed + 1);
+            st_next.ore -= cfg.obs_rc_ore;
+            st_next.clay -= cfg.obs_rc_clay;
+            st_next.obs_robots += 1;
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+        }
+    }
+
+    if st.clay_robots <= 8 {
+        // never build more than 8 clay robots....
+        let ore_needed = if cfg.clay_rc_ore > st.ore {
+            cfg.clay_rc_ore - st.ore } else { 0 };
+        let steps_needed = ( ore_needed + st.ore_robots - 1 ) / st.ore_robots;
+        if steps_needed + st.step + 1 < 24 {
+            let mut st_next = collect(&st, steps_needed + 1);
+            st_next.ore -= cfg.clay_rc_ore;
+            st_next.clay_robots += 1;
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+        }
+    }
+
+    if st.ore_robots <= 8 {
+        // never build more than 8 ore robots....
+        let ore_needed = if cfg.ore_rc_ore > st.ore {
+            cfg.ore_rc_ore - st.ore } else { 0 };
+        let steps_needed = ( ore_needed + st.ore_robots - 1 ) / st.ore_robots;
+        if steps_needed + st.step + 1 < 24 {
+            let mut st_next = collect(&st, steps_needed + 1);
+            st_next.ore -= cfg.ore_rc_ore;
+            st_next.ore_robots += 1;
             max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
         }
     }
@@ -76,13 +126,17 @@ fn get_numeric(s: &str, idx : usize) -> u16 {
 }
 
 fn part1(cfgs : &Vec<Config>) {
-    let initial_state = State {
-        ore_robots : 1,
-        ..Default::default()
-    };
-
-    let max_geo = get_max_geodes(&cfgs[0], initial_state);
-    println!("Max geodes = {max_geo}");
+    let mut quality_tot : u32 = 0;
+    for (id, cfg) in cfgs.iter().enumerate() {
+        let initial_state = State {
+            ore_robots : 1,
+            ..Default::default()
+        };
+        let max_geo : u32 = get_max_geodes(cfg, initial_state) as u32;
+        println!("ID {}: Max geodes = {max_geo}", id + 1);
+        quality_tot += (id + 1) as u32 * max_geo;
+    }
+    println!("Total quality: {quality_tot}");
 }
 
 fn part2() {
