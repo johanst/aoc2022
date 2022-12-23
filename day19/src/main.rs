@@ -43,15 +43,15 @@ fn collect(st : &State, steps : u16) -> State {
     st_next
 }
 
-fn get_max_geodes(cfg : &Config, st : State) -> u16 {
-    let mut max_geo = st.geo + st.geo_robots * (24 - st.step);
+fn get_max_geodes(cfg : &Config, st : State, max_steps : u16) -> u16 {
+    let mut max_geo = st.geo + st.geo_robots * (max_steps - st.step);
     //dbg!(&st, max_geo);
     //let mut dummy : String = "".to_string();
     //stdin().read_line(&mut dummy);
 
     if st.obs_robots > 0 {
         // I can build more geo_robots if have the stuff and I have the
-        // robot before step 24
+        // robot before step max_steps
         let obs_needed = if cfg.geo_rc_obs > st.obs {
             cfg.geo_rc_obs - st.obs } else { 0 };
         let ore_needed = if cfg.geo_rc_ore > st.ore {
@@ -59,13 +59,13 @@ fn get_max_geodes(cfg : &Config, st : State) -> u16 {
         let steps_needed = cmp::max(
             ( obs_needed + st.obs_robots - 1 ) / st.obs_robots,
             ( ore_needed + st.ore_robots - 1 ) / st.ore_robots);
-        if steps_needed + st.step + 1 < 24 {
+        if steps_needed + st.step + 1 < max_steps {
             // steps_needed to collect + 1 for creating the robot
             let mut st_next = collect(&st, steps_needed + 1);
             st_next.ore -= cfg.geo_rc_ore;
             st_next.obs -= cfg.geo_rc_obs;
             st_next.geo_robots += 1;
-            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next, max_steps));
         }
     }
 
@@ -78,38 +78,38 @@ fn get_max_geodes(cfg : &Config, st : State) -> u16 {
         let steps_needed = cmp::max(
             ( ore_needed + st.ore_robots - 1 ) / st.ore_robots,
             ( clay_needed + st.clay_robots - 1 ) / st.clay_robots);
-        if steps_needed + st.step + 1 < 24 {
+        if steps_needed + st.step + 1 < max_steps {
             let mut st_next = collect(&st, steps_needed + 1);
             st_next.ore -= cfg.obs_rc_ore;
             st_next.clay -= cfg.obs_rc_clay;
             st_next.obs_robots += 1;
-            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next, max_steps));
         }
     }
 
-    if st.clay_robots <= 8 {
-        // never build more than 8 clay robots....
+    if st.clay_robots <= 12 {
+        // never build more than 12 clay robots....
         let ore_needed = if cfg.clay_rc_ore > st.ore {
             cfg.clay_rc_ore - st.ore } else { 0 };
         let steps_needed = ( ore_needed + st.ore_robots - 1 ) / st.ore_robots;
-        if steps_needed + st.step + 1 < 24 {
+        if steps_needed + st.step + 1 < max_steps {
             let mut st_next = collect(&st, steps_needed + 1);
             st_next.ore -= cfg.clay_rc_ore;
             st_next.clay_robots += 1;
-            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next, max_steps));
         }
     }
 
-    if st.ore_robots <= 8 {
+    if st.ore_robots <= 4 {
         // never build more than 8 ore robots....
         let ore_needed = if cfg.ore_rc_ore > st.ore {
             cfg.ore_rc_ore - st.ore } else { 0 };
         let steps_needed = ( ore_needed + st.ore_robots - 1 ) / st.ore_robots;
-        if steps_needed + st.step + 1 < 24 {
+        if steps_needed + st.step + 1 < max_steps {
             let mut st_next = collect(&st, steps_needed + 1);
             st_next.ore -= cfg.ore_rc_ore;
             st_next.ore_robots += 1;
-            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next, max_steps));
         }
     }
 
@@ -132,18 +132,30 @@ fn part1(cfgs : &Vec<Config>) {
             ore_robots : 1,
             ..Default::default()
         };
-        let max_geo : u32 = get_max_geodes(cfg, initial_state) as u32;
+        let max_geo : u32 = get_max_geodes(cfg, initial_state, 24) as u32;
         println!("ID {}: Max geodes = {max_geo}", id + 1);
         quality_tot += (id + 1) as u32 * max_geo;
     }
     println!("Total quality: {quality_tot}");
 }
 
-fn part2() {
+fn part2(cfgs : &Vec<Config>) {
+    println!("Part2");
+    let mut prod : u32 = 1;
+    for (id, cfg) in cfgs.iter().take(3).enumerate() {
+        let initial_state = State {
+            ore_robots : 1,
+            ..Default::default()
+        };
+        let max_geo : u32 = get_max_geodes(cfg, initial_state, 32) as u32;
+        println!("ID {}: Max geodes = {max_geo}", id + 1);
+        prod *= max_geo;
+    }
+    println!("Da prod: {prod}");
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("ex.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     let mut cfgs : Vec<Config> = Vec::new();
@@ -167,7 +179,7 @@ fn main() {
     dbg!(v);
 
     part1(&cfgs);
-    part2();
+    part2(&cfgs);
 }
 
 #[cfg(test)]
