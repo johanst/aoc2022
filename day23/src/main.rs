@@ -184,10 +184,10 @@ fn part1(elves : &HashSet<(i32, i32)>) {
 fn part2(elves : &HashSet<(i32, i32)>) {
     let mut elves = elves.clone();
     let mut direction = 0;
-    let mut moved = false;
     let mut round = 1;
     loop {
         //println!();
+        let moved;
         (elves, moved) = move_elves(&elves, direction);
         if !moved {
             println!("No moves at round {round}");
