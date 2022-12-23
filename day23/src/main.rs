@@ -107,7 +107,7 @@ fn try_move_in_direction(
     }
 }
 
-fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> HashSet<(i32, i32)> {
+fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> (HashSet<(i32, i32)>, bool) {
     // map from -> to
     let mut elf_move : HashMap<(i32, i32), (i32, i32)> = HashMap::new();
     // map to -> nbr of elves
@@ -148,8 +148,12 @@ fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> HashSet<(i32, 
     }
 
     let mut elves_new : HashSet<(i32, i32)> = HashSet::new();
+    let mut moved = false;
     for (elf_old, elf_new) in elf_move.iter() {
         if *elf_pos.get(elf_new).unwrap() == 1 {
+            if *elf_old != *elf_new {
+                moved = true;
+            }
             elves_new.insert(*elf_new);
         } else {
             //println!("({},{}) not allowed to move", elf_old.0, elf_old.1);
@@ -157,7 +161,7 @@ fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> HashSet<(i32, 
         }
     }
 
-    elves_new
+    (elves_new, moved)
 }
 
 fn part1(elves : &HashSet<(i32, i32)>) {
@@ -166,7 +170,7 @@ fn part1(elves : &HashSet<(i32, i32)>) {
     let mut direction = 0;
     for _ in 0..10 {
         //println!();
-        elves = move_elves(&elves, direction);
+        (elves, _) = move_elves(&elves, direction);
         //draw_elves(&elves);
         direction += 1;
         direction %= 4;
@@ -177,7 +181,23 @@ fn part1(elves : &HashSet<(i32, i32)>) {
     println!("Nbr of empty places: {}", tot);
 }
 
-fn part2() {
+fn part2(elves : &HashSet<(i32, i32)>) {
+    let mut elves = elves.clone();
+    let mut direction = 0;
+    let mut moved = false;
+    let mut round = 1;
+    loop {
+        //println!();
+        (elves, moved) = move_elves(&elves, direction);
+        if !moved {
+            println!("No moves at round {round}");
+            break;
+        }
+        //draw_elves(&elves);
+        direction += 1;
+        direction %= 4;
+        round += 1;
+    }
 }
 
 fn main() {
@@ -203,7 +223,7 @@ fn main() {
     //dbg!(v);
 
     part1(&elves);
-    part2();
+    part2(&elves);
 }
 
 #[cfg(test)]
