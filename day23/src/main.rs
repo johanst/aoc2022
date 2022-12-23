@@ -63,44 +63,44 @@ fn try_move_in_direction(
             // north
             for x in -1..=1 {
                 if elves.contains(&(elf.0 + x, elf.1 - 1)) {
-                    println!("({},{}) cannot move north", elf.0, elf.1);
+                    //println!("({},{}) cannot move north", elf.0, elf.1);
                     return None;
                 }
             }
-            println!("({},{}) -> ({},{}) (NORTH)", elf.0, elf.1, elf.0, elf.1 - 1);
+            //println!("({},{}) -> ({},{}) (NORTH)", elf.0, elf.1, elf.0, elf.1 - 1);
             Some((elf.0, elf.1 - 1))
         },
         1 => {
             // south
             for x in -1..=1 {
                 if elves.contains(&(elf.0 + x, elf.1 + 1)) {
-                    println!("({},{}) cannot move south", elf.0, elf.1);
+                    //println!("({},{}) cannot move south", elf.0, elf.1);
                     return None;
                 }
             }
-            println!("({},{}) -> ({},{}) (SOUTH)", elf.0, elf.1, elf.0, elf.1 + 1);
+            //println!("({},{}) -> ({},{}) (SOUTH)", elf.0, elf.1, elf.0, elf.1 + 1);
             Some((elf.0, elf.1 + 1))
         },
         2 => {
             // west
             for y in -1..=1 {
                 if elves.contains(&(elf.0 - 1, elf.1 + y)) {
-                    println!("({},{}) cannot move west", elf.0, elf.1);
+                    //println!("({},{}) cannot move west", elf.0, elf.1);
                     return None;
                 }
             }
-            println!("({},{}) -> ({},{}) (WEST)", elf.0, elf.1, elf.0 - 1, elf.1);
+            //println!("({},{}) -> ({},{}) (WEST)", elf.0, elf.1, elf.0 - 1, elf.1);
             Some((elf.0 - 1, elf.1))
         },
         3 => {
             // east
             for y in -1..=1 {
                 if elves.contains(&(elf.0 + 1, elf.1 + y)) {
-                    println!("({},{}) cannot move east", elf.0, elf.1);
+                    //println!("({},{}) cannot move east", elf.0, elf.1);
                     return None;
                 }
             }
-            println!("({},{}) -> ({},{}) (EAST)", elf.0, elf.1, elf.0 + 1, elf.1);
+            //println!("({},{}) -> ({},{}) (EAST)", elf.0, elf.1, elf.0 + 1, elf.1);
             Some((elf.0 + 1, elf.1))
         },
         _ => unreachable!(),
@@ -140,7 +140,7 @@ fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> HashSet<(i32, 
                 }
             }
         } else {
-            println!("({},{}) has no neighbours", elf.0, elf.1);
+            //println!("({},{}) has no neighbours", elf.0, elf.1);
         }
 
         elf_move.insert(*elf, pos_new);
@@ -152,7 +152,7 @@ fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> HashSet<(i32, 
         if *elf_pos.get(elf_new).unwrap() == 1 {
             elves_new.insert(*elf_new);
         } else {
-            println!("({},{}) not allowed to move", elf_old.0, elf_old.1);
+            //println!("({},{}) not allowed to move", elf_old.0, elf_old.1);
             elves_new.insert(*elf_old);
         }
     }
@@ -161,23 +161,27 @@ fn move_elves(elves : &HashSet<(i32, i32)>, direction : usize) -> HashSet<(i32, 
 }
 
 fn part1(elves : &HashSet<(i32, i32)>) {
-    draw_elves(elves);
+    //draw_elves(elves);
     let mut elves = elves.clone();
     let mut direction = 0;
-    for _ in 0..3 {
-        println!();
+    for _ in 0..10 {
+        //println!();
         elves = move_elves(&elves, direction);
-        draw_elves(&elves);
+        //draw_elves(&elves);
         direction += 1;
         direction %= 4;
     }
+    let r = get_range(&elves);
+    let tot = (r.xmax - r.xmin + 1) * (r.ymax - r.ymin + 1) - elves.len() as i32;
+    println!();
+    println!("Nbr of empty places: {}", tot);
 }
 
 fn part2() {
 }
 
 fn main() {
-    let lines = std::fs::read_to_string("exsmall.txt").unwrap();
+    let lines = std::fs::read_to_string("input.txt").unwrap();
     let mut v = lines.split("\n").collect::<Vec<&str>>();
     assert!(!v.is_empty());
     if v[v.len() - 1] == "" {
