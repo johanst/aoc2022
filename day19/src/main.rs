@@ -11,36 +11,78 @@ use std::io::stdin;
 
 #[derive(Debug, Default)]
 struct Config {
-    ore_rc_ore : u32,
-    clay_rc_ore : u32,
-    obs_rc_ore : u32,
-    obs_rc_clay : u32,
-    geo_rc_ore : u32,
-    geo_rc_obs : u32,
+    ore_rc_ore : u16,
+    clay_rc_ore : u16,
+    obs_rc_ore : u16,
+    obs_rc_clay : u16,
+    geo_rc_ore : u16,
+    geo_rc_obs : u16,
 }
 
-#[derive(Debug, PartialOrd, Ord, Default, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Default, Clone)]
 struct State {
-    step : u32,
-    ore : u32,
-    clay : u32,
-    obs : u32,
-    geo : u32,
-    ore_robots : u32,
-    clay_robots : u32,
-    obs_robots : u32,
-    geo_robots : u32,
+    step : u16,
+    ore : u16,
+    clay : u16,
+    obs : u16,
+    geo : u16,
+    ore_robots : u16,
+    clay_robots : u16,
+    obs_robots : u16,
+    geo_robots : u16,
+}
 
-fn get_numeric(s: &str, idx : usize) -> u32 {
+fn collect(st : &State, steps : u16) -> State {
+    let mut st_next = st.clone();
+    st_next.step += steps;
+    st_next.ore += st_next.ore_robots * steps;
+    st_next.clay += st_next.clay_robots * steps;
+    st_next.obs += st_next.obs_robots * steps;
+    st_next.geo += st_next.geo_robots * steps;
+
+    st_next
+}
+
+fn get_max_geodes(cfg : &Config, st : State) -> u16 {
+    let mut max_geo = st.geo + st.geo_robots * (24 - st.step);
+    dbg!(&st, max_geo);
+
+    if st.obs_robots > 0 {
+        // I can build more geo_robots if have the stuff and I have the
+        // robot before step 24
+        let steps_needed = cmp::max(
+            ( cfg.geo_rc_obs + st.obs_robots - 1 ) / st.obs_robots,
+            ( cfg.geo_rc_ore + st.ore_robots - 1 ) / st.ore_robots);
+        if steps_needed + st.step + 1 < 24 {
+            // steps_needed to collect + 1 for creating the robot
+            let mut st_next = collect(&st, steps_needed + 1);
+            st_next.ore -= cfg.geo_rc_ore;
+            st_next.obs -= cfg.geo_rc_obs;
+            st_next.geo_robots += 1;
+            max_geo = cmp::max(max_geo, get_max_geodes(cfg, st_next));
+        }
+    }
+
+    max_geo
+}
+
+fn get_numeric(s: &str, idx : usize) -> u16 {
     let mut w = s.split_whitespace();
     if idx == 0 {
-        return w.next().unwrap().parse::<u32>().unwrap();
+        return w.next().unwrap().parse::<u16>().unwrap();
     } else {
-        return w.skip(idx).next().unwrap().parse::<u32>().unwrap();
+        return w.skip(idx).next().unwrap().parse::<u16>().unwrap();
     }
 }
 
-fn part1() {
+fn part1(cfgs : &Vec<Config>) {
+    let initial_state = State {
+        ore_robots : 1,
+        ..Default::default()
+    };
+
+    let max_geo = get_max_geodes(&cfgs[0], initial_state);
+    println!("Max geodes = {max_geo}");
 }
 
 fn part2() {
@@ -67,10 +109,10 @@ fn main() {
         cfgs.push(cfg);
     }
 
-    dbg!(cfgs);
+    dbg!(&cfgs);
     dbg!(v);
 
-    part1();
+    part1(&cfgs);
     part2();
 }
 
