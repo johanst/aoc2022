@@ -124,6 +124,22 @@ fn dist_to_map(m : &Vec<Vec<Option<Direction>>>,
     (xmap, ymap)
 }
 
+fn get_dist_map(m : &Vec<Vec<Option<Direction>>>)
+                -> Vec<Vec<(Vec<u8>, Vec<u8>)>> {
+    let mut dist_map : Vec<Vec<(Vec<u8>, Vec<u8>)>> = Vec::new();
+    let ylen = m.len() as i32;
+    let xlen = m[0].len() as i32;
+    for y in 0..ylen {
+        dist_map.push(Vec::new());
+        for x in 0..xlen {
+            dist_map.last_mut().unwrap().push(
+                dist_to_map(&m, &get_distances(&m, (x, y))));
+        }
+    }
+
+    dist_map
+}
+
 fn main() {
 
     let m = get_input("ex.txt");
@@ -206,7 +222,7 @@ mod test {
         // ######.#
 
         let mut xmap;
-        let mut ymap;
+        let ymap;
         (xmap, ymap) = dist_to_map(&m, &get_distances(&m, (1, 1)));
 
         assert_eq!(xmap.len(), 6);
@@ -219,8 +235,25 @@ mod test {
         assert_eq!(ymap[0], 0);
         assert_eq!(ymap[3], 1);
 
-        (xmap, ymap) = dist_to_map(&m, &get_distances(&m, (2, 2)));
+        (xmap, _) = dist_to_map(&m, &get_distances(&m, (2, 2)));
         assert_eq!(xmap[2], 2);
+    }
+
+    #[test]
+    fn test_get_dist_map() {
+        let m = get_input("ex.txt");
+
+        // #.######
+        // #>>.<^<#
+        // #.<..<<#
+        // #>v.><>#
+        // #<^v^^>#
+        // ######.#
+
+        let dm = get_dist_map(&m);
+        assert_eq!(dm[2][2].0[2], 2);
+        assert_eq!(dm[0][4].1[0], 1);
+        assert_eq!(dm[0][0].0[1], 0);
     }
 }
 
