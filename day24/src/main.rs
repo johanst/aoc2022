@@ -5,15 +5,11 @@
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::BinaryHeap;
 use std::cmp;
+use std::cmp::Ordering;
 use std::fmt;
 use std::io::stdin;
-
-fn part1() {
-}
-
-fn part2() {
-}
 
 #[derive(Debug)]
 enum Direction {
@@ -140,11 +136,90 @@ fn get_dist_map(m : &Vec<Vec<Option<Direction>>>)
     dist_map
 }
 
+#[derive(Debug, Default, PartialEq, Eq)]
+struct State {
+    min_steps_tot : u32,
+    steps : u32,
+    xpos : i32,
+    ypos : i32,
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.min_steps_tot.cmp(&self.min_steps_tot)
+            .then_with(|| self.steps.cmp(&other.steps))
+            .then_with(|| self.xpos.cmp(&other.xpos))
+            .then_with(|| self.ypos.cmp(&other.ypos))
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn part1(m : &Vec<Vec<Option<Direction>>>) {
+    let ylen = m.len() as i32;
+    let xlen = m[0].len() as i32;
+    let dm = get_dist_map(&m);
+
+    // including (0, 0) as an option to wait
+    let directions : [(i32, i32); 5] = [(-1,0), (0,-1), (0,1), (1,0), (0, 0)];
+    let mut heap = BinaryHeap::new();
+    heap.push(State {ypos : -1, ..Default::default()});
+    while let Some(st) = heap.pop() {
+        let (x, y) = (st.xpos, st.ypos);
+        if y == ylen && x == xlen - 1 {
+            println!("Reached end, total nbr of steps: {}", st.steps);
+            return;
+        }
+
+        for (dy, dx) in directions.iter() {
+            let yy = y + dy;
+            let xx = x + dx;
+            // Special case for exit, always ok
+            if yy == ylen && xx == xlen - 1 {
+                heap.push(
+                    State {
+                        min_steps_tot : st.steps + 1,
+                        steps : st.steps + 1,
+                        xpos : xx,
+                        ypos : yy,
+                    });
+            }
+            // Move
+            if yy >= 0 && yy < ylen && xx >= 0 && xx < xlen {
+                if dm[yy as usize][xx as usize].0[
+                    ((st.steps + 1) as usize % xlen as usize)] == 0 &&
+                    dm[yy as usize][xx as usize].1[
+                        (st.steps + 1) as usize % ylen as usize] == 0 {
+                        // no winds here so we can move
+                        let min_steps_left =
+                            ((ylen - yy) + (xlen - 1 - xx)) as u32;
+                        heap.push(
+                            State {
+                                min_steps_tot : st.steps + min_steps_left,
+                                steps : st.steps + 1,
+                                xpos : xx,
+                                ypos : yy,
+                            });
+                    }
+            }
+        }
+    }
+
+    panic!("didn't find a way out");
+}
+
+fn part2() {
+}
+
 fn main() {
 
-    let m = get_input("ex.txt");
+    let m = get_input("input.txt");
 
-    part1();
+    part1(&m);
     part2();
 }
 
