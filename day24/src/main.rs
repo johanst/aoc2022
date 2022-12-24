@@ -211,6 +211,16 @@ mod test {
 
         assert_eq!(xmap.len(), 6);
         assert_eq!(ymap.len(), 4);
+
+        assert_eq!(xmap[0], 1);
+        assert_eq!(xmap[1], 0);
+        assert_eq!(xmap[3], 1);
+
+        assert_eq!(ymap[0], 0);
+        assert_eq!(ymap[3], 1);
+
+        (xmap, ymap) = dist_to_map(&m, &get_distances(&m, (2, 2)));
+        assert_eq!(xmap[2], 2);
     }
 }
 
