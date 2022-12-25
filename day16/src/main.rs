@@ -26,6 +26,35 @@ struct Step {
     epos : usize,  // Elephant position
 }
 
+#[derive(Debug, Hash, Eq, PartialEq)]
+struct StepKey {
+    step_1 : u32,
+    pos_1 : u32,
+    step_2 : u32,
+    pos_2 : u32,
+}
+
+impl StepKey {
+    fn from_step(step : &Step) -> Self {
+        if step.step < step.estep ||
+            (step.step == step.estep && step.pos < step.epos) {
+            Self {
+                step_1 : step.step,
+                pos_1 : step.pos as u32,
+                step_2 : step.estep,
+                pos_2 : step.epos as u32,
+            }
+        } else {
+            Self {
+                step_1 : step.estep,
+                pos_1 : step.epos as u32,
+                step_2 : step.step,
+                pos_2 : step.pos as u32,
+            }
+            }
+    }
+}
+
 // for finding shortest path between valve positions
 #[derive(Debug, Default, PartialEq, PartialOrd, Eq, Ord, Clone)]
 struct Pos {
@@ -228,6 +257,7 @@ impl State {
 
     fn find_max_with_elephant(&self) {
         let mut heap = BinaryHeap::new();
+        let mut vis : HashMap<StepKey, u32> = HashMap::new();
         heap.push(Step {
             pos: self.vid2idx("AA"),
             epos: self.vid2idx("AA"),
@@ -264,34 +294,38 @@ impl State {
                     step_next.step += sd + 1;
                     step_next.current += self.get_current_released_pressure(
                         step.mvalves) * (sd + 1);
-                    step_next.valves |= 1 << *path;
-                    step_next.mvalves |= 1 << *path;
+                    let skey = StepKey::from_step(&step_next);
+                    if step_next.current >= *vis.get(&skey).unwrap_or(&(u32::MIN)) {
+                        step_next.valves |= 1 << *path;
+                        step_next.mvalves |= 1 << *path;
 
-                    let stepmin = cmp::min(step_next.step, step_next.estep);
-                    let pme = self.get_current_released_pressure(step.mvalves);
-                    let pel = self.get_current_released_pressure(step.evalves);
-                    let psome = self.get_current_unreleased_pressure(step.valves);
-                    step_next.totpot =
-                        (26 - step_next.step) * pme +
-                        (26 - step_next.estep) * pel +
-                        (26 - stepmin) * psome +
-                        step_next.current;
+                        let stepmin = cmp::min(step_next.step, step_next.estep);
+                        let pme = self.get_current_released_pressure(step.mvalves);
+                        let pel = self.get_current_released_pressure(step.evalves);
+                        let psome = self.get_current_unreleased_pressure(step.valves);
+                        step_next.totpot =
+                            (26 - step_next.step) * pme +
+                            (26 - step_next.estep) * pel +
+                            (26 - stepmin) * psome +
+                            step_next.current;
 
-                    //println!("-----");
-                    //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
-                    //         step.step,
-                    //         self.idx2vid(step.pos),
-                    //         self.idx2vid(step_next.pos),
-                    //         sd + 1,
-                    //         self.get_current_released_pressure(
-                    //             step.valves) * (sd + 1)
-                    //);
-                    //dbg!(&step);
-                    //dbg!(&step_next);
-                    //let mut dummy : String = "".to_string();
-                    //stdin().read_line(&mut dummy);
+                        //println!("-----");
+                        //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
+                        //         step.step,
+                        //         self.idx2vid(step.pos),
+                        //         self.idx2vid(step_next.pos),
+                        //         sd + 1,
+                        //         self.get_current_released_pressure(
+                        //             step.valves) * (sd + 1)
+                        //);
+                        //dbg!(&step);
+                        //dbg!(&step_next);
+                        //let mut dummy : String = "".to_string();
+                        //stdin().read_line(&mut dummy);
 
-                    heap.push(step_next);
+                        vis.insert(skey, step_next.current);
+                        heap.push(step_next);
+                    }
                 }
 
                 // Elephant moves
@@ -304,34 +338,38 @@ impl State {
                     step_next.estep += sd + 1;
                     step_next.current += self.get_current_released_pressure(
                         step.evalves) * (sd + 1);
-                    step_next.valves |= 1 << *path;
-                    step_next.evalves |= 1 << *path;
+                    let skey = StepKey::from_step(&step_next);
+                    if step_next.current >= *vis.get(&skey).unwrap_or(&(u32::MIN)) {
+                        step_next.valves |= 1 << *path;
+                        step_next.evalves |= 1 << *path;
 
-                    let stepmin = cmp::min(step_next.step, step_next.estep);
-                    let pme = self.get_current_released_pressure(step.mvalves);
-                    let pel = self.get_current_released_pressure(step.evalves);
-                    let psome = self.get_current_unreleased_pressure(step.valves);
-                    step_next.totpot =
-                        (26 - step_next.step) * pme +
-                        (26 - step_next.estep) * pel +
-                        (26 - stepmin) * psome +
-                        step_next.current;
+                        let stepmin = cmp::min(step_next.step, step_next.estep);
+                        let pme = self.get_current_released_pressure(step.mvalves);
+                        let pel = self.get_current_released_pressure(step.evalves);
+                        let psome = self.get_current_unreleased_pressure(step.valves);
+                        step_next.totpot =
+                            (26 - step_next.step) * pme +
+                            (26 - step_next.estep) * pel +
+                            (26 - stepmin) * psome +
+                            step_next.current;
 
-                    //println!("-----");
-                    //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
-                    //         step.estep,
-                    //         self.idx2vid(step.epos),
-                    //         self.idx2vid(step_next.epos),
-                    //         sd + 1,
-                    //         self.get_current_released_pressure(
-                    //             step.valves) * (sd + 1)
-                    //);
-                    //dbg!(&step);
-                    //dbg!(&step_next);
-                    //let mut dummy : String = "".to_string();
-                    //stdin().read_line(&mut dummy);
+                        //println!("-----");
+                        //println!("Step {}: Moving from {} to {} and releasing valve in {} steps while releasing {} pressure",
+                        //         step.estep,
+                        //         self.idx2vid(step.epos),
+                        //         self.idx2vid(step_next.epos),
+                        //         sd + 1,
+                        //         self.get_current_released_pressure(
+                        //             step.valves) * (sd + 1)
+                        //);
+                        //dbg!(&step);
+                        //dbg!(&step_next);
+                        //let mut dummy : String = "".to_string();
+                        //stdin().read_line(&mut dummy);
 
-                    heap.push(step_next);
+                        vis.insert(skey, step_next.current);
+                        heap.push(step_next);
+                    }
                 }
             }
 
@@ -341,11 +379,15 @@ impl State {
                 step_next.step = 26;
                 step_next.current += self.get_current_released_pressure(
                     step.mvalves) * (26 - step.step);
-                step_next.totpot = step_next.current +
-                    self.get_current_released_pressure(step.evalves) *
-                    (26 - step.estep);
+                let skey = StepKey::from_step(&step_next);
+                if step_next.current >= *vis.get(&skey).unwrap_or(&(u32::MIN)) {
+                    step_next.totpot = step_next.current +
+                        self.get_current_released_pressure(step.evalves) *
+                        (26 - step.estep);
 
-                heap.push(step_next);
+                    vis.insert(skey, step_next.current);
+                    heap.push(step_next);
+                }
             }
 
             // if elephant couldn't turn on any new valve, let's just stay here
@@ -354,11 +396,15 @@ impl State {
                 step_next.estep = 26;
                 step_next.current += self.get_current_released_pressure(
                     step.evalves) * (26 - step.estep);
-                step_next.totpot = step_next.current +
-                    self.get_current_released_pressure(step.mvalves) *
-                    (26 - step.step);
+                let skey = StepKey::from_step(&step_next);
+                if step_next.current >= *vis.get(&skey).unwrap_or(&(u32::MIN)) {
+                    step_next.totpot = step_next.current +
+                        self.get_current_released_pressure(step.mvalves) *
+                        (26 - step.step);
 
-                heap.push(step_next);
+                    vis.insert(skey, step_next.current);
+                    heap.push(step_next);
+                }
             }
         }
     }
