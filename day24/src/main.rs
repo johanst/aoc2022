@@ -166,7 +166,10 @@ impl PartialOrd for State {
     }
 }
 
-fn part1(m : &Vec<Vec<Option<Direction>>>) {
+fn shortest_path(m : &Vec<Vec<Option<Direction>>>,
+                 steps_init : u32,
+                 from : (i32, i32),
+                 to : (i32, i32)) -> u32 {
     let ylen = m.len() as i32;
     let xlen = m[0].len() as i32;
     let dm = get_dist_map(&m);
@@ -175,21 +178,31 @@ fn part1(m : &Vec<Vec<Option<Direction>>>) {
 
     let directions : [(i32, i32); 4] = [(-1,0), (0,-1), (0,1), (1,0)];
     let mut heap = BinaryHeap::new();
-    heap.push(State {ypos : -1, ..Default::default()});
-    vis.insert(StateKey {ypos : -1, ..Default::default()}, 0);
+    heap.push(State {
+        min_steps_tot : 0,
+        steps : steps_init,
+        xpos : from.0,
+        ypos : from.1,
+    });
+    vis.insert(
+        StateKey {
+            steps : steps_init % (xlen as u32 * ylen as u32),
+            xpos : from.0,
+            ypos : from.1,
+        }, 0);
     while let Some(st) = heap.pop() {
         //dbg!(&st, heap.len());
         let (x, y) = (st.xpos, st.ypos);
-        if y == ylen && x == xlen - 1 {
+        if y == to.1 && x == to.0 {
             println!("Reached end, total nbr of steps: {}", st.steps);
-            return;
+            return st.steps;
         }
 
         for (dy, dx) in directions.iter() {
             let yy = y + dy;
             let xx = x + dx;
             // Special case for exit, always ok
-            if yy == ylen && xx == xlen - 1 {
+            if yy == to.1 && xx == to.0 {
                 heap.push(
                     State {
                         min_steps_tot : st.steps + 1,
@@ -232,7 +245,7 @@ fn part1(m : &Vec<Vec<Option<Direction>>>) {
             xpos : x,
             ypos : y,
         };
-        if (y == -1 && x == 0) ||
+        if (y == from.1 && x == from.0) ||
             (dm[y as usize][x as usize].0[
             ((st.steps + 1) as usize % xlen as usize)] == 0 &&
             dm[y as usize][x as usize].1[
@@ -393,9 +406,17 @@ fn part2() {
 fn main() {
 
     let m = get_input("input.txt");
+    let ylen = m.len() as i32;
+    let xlen = m[0].len() as i32;
+    let from = (0, -1);
+    let to = (xlen - 1, ylen);
 
     //part1(474 too high)
-    part1(&m);
+    let steps_1 = shortest_path(&m, 0, from, to);
+    let steps_2 = shortest_path(&m, steps_1, to, from);
+    let steps_3 = shortest_path(&m, steps_2, from, to);
+
+    println!("Total nbr of steps: {}", steps_3);
     //part1_depth_first(&m);
     part2();
 }
