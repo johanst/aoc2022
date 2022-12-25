@@ -144,12 +144,19 @@ struct State {
     ypos : i32,
 }
 
+#[derive(Debug, Default, PartialEq, Eq, Hash)]
+struct StateKey {
+    steps : u32,
+    xpos : i32,
+    ypos : i32,
+}
+
 impl Ord for State {
     fn cmp(&self, other: &Self) -> Ordering {
         other.min_steps_tot.cmp(&self.min_steps_tot)
-            .then_with(|| self.steps.cmp(&other.steps))
-            .then_with(|| self.xpos.cmp(&other.xpos))
-            .then_with(|| self.ypos.cmp(&other.ypos))
+            .then_with(|| other.steps.cmp(&self.steps))
+            .then_with(|| other.xpos.cmp(&self.xpos))
+            .then_with(|| other.ypos.cmp(&self.ypos))
     }
 }
 
@@ -164,11 +171,14 @@ fn part1(m : &Vec<Vec<Option<Direction>>>) {
     let xlen = m[0].len() as i32;
     let dm = get_dist_map(&m);
 
-    // including (0, 0) as an option to wait
-    let directions : [(i32, i32); 5] = [(-1,0), (0,-1), (0,1), (1,0), (0, 0)];
+    let mut vis : HashMap<StateKey, u32> = HashMap::new();
+
+    let directions : [(i32, i32); 4] = [(-1,0), (0,-1), (0,1), (1,0)];
     let mut heap = BinaryHeap::new();
     heap.push(State {ypos : -1, ..Default::default()});
+    vis.insert(StateKey {ypos : -1, ..Default::default()}, 0);
     while let Some(st) = heap.pop() {
+        //dbg!(&st, heap.len());
         let (x, y) = (st.xpos, st.ypos);
         if y == ylen && x == xlen - 1 {
             println!("Reached end, total nbr of steps: {}", st.steps);
@@ -189,27 +199,192 @@ fn part1(m : &Vec<Vec<Option<Direction>>>) {
                     });
             }
             // Move
+            //dbg!(xx,yy,&vis);
+            let skey = StateKey {
+                steps : (st.steps + 1) % (xlen as u32 * ylen as u32),
+                xpos : xx,
+                ypos : yy,
+            };
             if yy >= 0 && yy < ylen && xx >= 0 && xx < xlen {
-                if dm[yy as usize][xx as usize].0[
+                if  dm[yy as usize][xx as usize].0[
                     ((st.steps + 1) as usize % xlen as usize)] == 0 &&
                     dm[yy as usize][xx as usize].1[
-                        (st.steps + 1) as usize % ylen as usize] == 0 {
-                        // no winds here so we can move
-                        let min_steps_left =
-                            ((ylen - yy) + (xlen - 1 - xx)) as u32;
-                        heap.push(
-                            State {
-                                min_steps_tot : st.steps + min_steps_left,
-                                steps : st.steps + 1,
-                                xpos : xx,
-                                ypos : yy,
-                            });
-                    }
+                        (st.steps + 1) as usize % ylen as usize] == 0 &&
+                    st.steps + 1 < *vis.get(&skey).unwrap_or(&(u32::MAX))
+                {
+                    // no winds here so we can move
+                    let min_steps_left =
+                        ((ylen - yy) + (xlen - 1 - xx)) as u32;
+                    heap.push(
+                        State {
+                            min_steps_tot : st.steps + min_steps_left,
+                            steps : st.steps + 1,
+                            xpos : xx,
+                            ypos : yy,
+                        });
+                    vis.insert(skey, st.steps + 1);
+                }
             }
+        }
+        // wait is also an option... and specifically at start pos
+        let skey = StateKey {
+            steps : (st.steps + 1) % (xlen as u32 * ylen as u32),
+            xpos : x,
+            ypos : y,
+        };
+        if (y == -1 && x == 0) ||
+            (dm[y as usize][x as usize].0[
+            ((st.steps + 1) as usize % xlen as usize)] == 0 &&
+            dm[y as usize][x as usize].1[
+                (st.steps + 1) as usize % ylen as usize] == 0) &&
+            st.steps + 1 < *vis.get(&skey).unwrap_or(&(u32::MAX))
+        {
+            // no winds here so we can move
+            let min_steps_left =
+                ((ylen - y) + (xlen - 1 - x)) as u32;
+            heap.push(
+                State {
+                    min_steps_tot : st.steps + min_steps_left,
+                    steps : st.steps + 1,
+                    xpos : x,
+                    ypos : y,
+                });
+            vis.insert(skey, st.steps + 1);
         }
     }
 
     panic!("didn't find a way out");
+}
+
+#[derive(Debug, PartialEq, Clone)]
+enum Action {
+    Init,
+    Move(usize),
+    Wait,
+    Done,
+}
+
+impl Default for Action {
+    fn default() -> Self {
+        Action::Init
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+struct StateD {
+    steps : u32,
+    xpos : i32,
+    ypos : i32,
+    action : Action
+}
+
+fn part1_depth_first(m : &Vec<Vec<Option<Direction>>>) {
+    let ylen = m.len() as i32;
+    let xlen = m[0].len() as i32;
+    let dm = get_dist_map(&m);
+
+    let mut stack : Vec<StateD> = Vec::new();
+    let mut stats : Vec<u64> = Vec::new();
+    let mut rptcnt : u64 = 0;
+
+//   let mut vis : HashMap<(i32,i32),u32> = HashMap::new();
+
+    let directions : [(i32, i32); 4] = [(0,1), (1,0), (-1,0), (0,-1)];
+    //    let mut heap = BinaryHeap::new();
+    stack.push(StateD {ypos : -1, ..Default::default()});
+    let mut min_steps : u32 = u32::MAX;
+    //heap.push(State {ypos : -1, ..Default::default()});
+    while let Some(mut st) = stack.pop() {
+        //dbg!(&st, stack.len());
+        //let mut dummy : String = "".to_string();
+        //stdin().read_line(&mut dummy);
+        while stats.len() < stack.len() + 1 {
+            stats.push(0);
+        }
+        stats[stack.len()] += 1;
+        rptcnt += 1;
+        if rptcnt % 100_000_1000 == 0 {
+            println!("Repeats: {}", rptcnt);
+            dbg!(&stats);
+        }
+
+        let (x, y) = (st.xpos, st.ypos);
+        if y == ylen && x == xlen - 1 {
+            if st.steps < min_steps {
+                println!("Reached end, total nbr of steps: {}", st.steps);
+                min_steps = st.steps;
+            }
+            continue;
+        }
+        loop {
+            let min_steps_left = ((ylen - y) + (xlen - 1 - x)) as u32;
+            if min_steps_left + st.steps >= min_steps {
+                break;
+            }
+
+            st.action = match st.action {
+                Action::Init => Action::Move(0),
+                Action::Move(0) => Action::Move(1),
+                Action::Move(1) => Action::Wait,
+                Action::Wait => Action::Move(2),
+                Action::Move(2) => Action::Move(3),
+                Action::Move(3) => Action::Done,
+                _ => unreachable!(),
+            };
+            if st.action == Action::Done {
+                break;
+            }
+            stack.push(st.clone());
+            match st.action {
+                Action::Move(dir) => {
+                    let yy = y + directions[dir].0;
+                    let xx = x + directions[dir].1;
+                    let yidx = yy as usize;
+                    let xidx = xx as usize;
+                    let su = st.steps as usize;
+                    let xmod = xlen as usize;
+                    let ymod = ylen as usize;
+                    //println!("  try move {yy}, {xx}");
+                    if (yy == ylen && xx == xlen - 1) ||
+                        (yy >= 0 && yy < ylen && xx >= 0 && xx < xlen &&
+                        dm[yidx][xidx].0[(su + 1) % xmod] == 0 &&
+                        dm[yidx][xidx].1[(su + 1) % ymod] == 0 &&
+                         min_steps_left + st.steps < min_steps) {
+                            //println!("    moving {yy}, {xx}");
+                            st.steps += 1;
+                            st.action = Action::Init;
+                            st.xpos = xx;
+                            st.ypos = yy;
+                            stack.push(st);
+                            break;
+                        }
+                },
+                Action::Wait => {
+                    let yidx = y as usize;
+                    let xidx = x as usize;
+                    let su = st.steps as usize;
+                    let xmod = xlen as usize;
+                    let ymod = ylen as usize;
+                    if ((y == -1 && x == 0) ||
+                        dm[yidx][xidx].0[(su + 1) % xmod] == 0 &&
+                        dm[yidx][xidx].1[(su + 1) % ymod] == 0) &&
+                        min_steps_left + st.steps < min_steps {
+                            st.steps += 1;
+                            st.action = Action::Init;
+                            st.xpos = x;
+                            st.ypos = y;
+                            stack.push(st);
+                            break;
+                        }
+                },
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    if min_steps == u32::MAX {
+        panic!("didn't find a way out");
+    }
 }
 
 fn part2() {
@@ -219,7 +394,9 @@ fn main() {
 
     let m = get_input("input.txt");
 
+    //part1(474 too high)
     part1(&m);
+    //part1_depth_first(&m);
     part2();
 }
 
